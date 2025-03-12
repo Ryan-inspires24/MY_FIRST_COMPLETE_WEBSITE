@@ -5,27 +5,50 @@
 {% block title %} Home - CamInspo{% endblock %}
 
 {% block content %}
-<main class="row my-4">
-    <div class="col-md-6 mb-4" id="blockquote">
-        <figure class="border p-4 rounded shadow-lg bg-light">
-            <blockquote class="blockquote text-center">
-                <p class="mb-0">"CamInspo, at the heart of Cameroon Trade..."</p>
-            </blockquote>
-            <figcaption class="text-right">
-                <cite>- By CamInspo Team</cite>
-            </figcaption>
-        </figure>
-    </div>
+<main class="container my-5">
+    <div class="row align-items-center">
+        <div class="col-md-6 mb-4" id="blockquote">
+            <figure class="border p-4 rounded shadow-lg bg-light">
+                <blockquote class="blockquote text-center">
+                    <p class="mb-0">"CamInspo, at the heart of Cameroon Trade..."</p>
+                </blockquote>
+                <figcaption class="text-right">
+                    <cite>- By CamInspo Team</cite>
+                </figcaption>
+            </figure>
+        </div>
 
-
-    <div class="col-md-6">
-        <h3>Explore the Market</h3>
-        <p class="lead p-3 fs-4">Discover a wide range of products and services from Cameroon’s finest vendors. Whether
-            you're looking for traditional arts, fashion, or modern beauty products, CamInspo has it all!</p>
-        <p class="p-4 fs-4">Join a growing community of shoppers and vendors on our platform. Easily browse products by
-            category and connect with vendors to get the best deals. Start shopping now and be part of the CamInspo
-            revolution!</p>
-        <a href="products.html" class="btn btn-primary">Browse Products</a>
+        <div class="col-md-6">
+            <h2 class="fw-bold">Explore the Market</h2>
+            <p class="lead p-3 fs-4">Discover a wide range of products and services from Cameroon’s finest vendors. Whether
+                you're looking for traditional arts, fashion, or modern beauty products, CamInspo has it all!</p>
+            <p class="p-4 fs-4">Join a growing community of shoppers and vendors on our platform. Easily browse products by
+                category and connect with vendors to get the best deals. Start shopping now and be part of the CamInspo
+                revolution!</p>
+            <a href="products.html" class="btn btn-primary btn-lg">Get Started</a>
+        </div>
     </div>
 </main>
+
+<section class="container my-5">
+    <h2 class="text-center mb-4">Check Out the Latest Services & Products</h2>
+
+    <div class="row g-4">
+        {% for premium_listing in premium_listings %}
+        <div class="col-sm-12 col-md-6 col-xl-4">
+            <div class="card shadow-sm border-0 h-100">
+                <img src="{{ premium_listing.image_url }}" class="card-img-top rounded-top" alt="Premium Product">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title fw-bold">{{ premium_listing.title }}</h5>
+                    <p class="card-text flex-grow-1">{{ premium_listing.caption }}</p>
+                    <button class="btn btn-success mt-3">
+                        <i class="bi bi-calendar-check"></i> Book Now
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
 {% endblock %}
