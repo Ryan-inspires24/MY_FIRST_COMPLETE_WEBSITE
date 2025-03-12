@@ -30,6 +30,11 @@
     </div>
 </main>
 
+<section class="container-fluid bg-dark text-white py-5 text-center shadow-lg">
+    <h2 class="fw-bold">Unlock Premium Features!</h2>
+    <p class="lead my-3">Get more visibility, attract more customers, and boost your sales with our premium listings.</p>
+    <a href="premium.html" class="btn btn-warning btn-lg">Upgrade to Premium</a>
+</section>
 <section class="container my-5">
     <h2 class="text-center mb-4">Check Out the Latest Services & Products</h2>
 
@@ -49,6 +54,35 @@
         </div>
         {% endfor %}
     </div>
+</section>
+<section class="container">
+    <h2 class="text-center fw-bold">Why Choose CamInspo?</h2>
+    <p class="text-center lead mb-4">CamInspo is more than just a marketplace—it’s a powerful tool for businesses and customers alike.</p>
+
+    <ul class="list-group list-group-flush fs-5">
+        <li class="list-group-item">
+            <i class="bi bi-eye text-primary"></i> <strong>Increased Visibility:</strong> Small businesses and local vendors get a platform to reach a wider audience.
+        </li>
+        <li class="list-group-item">
+            <i class="bi bi-calendar-event text-success"></i> <strong>Easy Reservations:</strong> Customers can effortlessly book services online, reducing long wait times.
+        </li>
+        <li class="list-group-item">
+            <i class="bi bi-people text-warning"></i> <strong>Perfect for Tourists:</strong> Tourists can discover authentic Cameroonian businesses and experiences with ease.
+        </li>
+        <li class="list-group-item">
+            <i class="bi bi-graph-up-arrow text-danger"></i> <strong>Boost Sales:</strong> Vendors can list promotions, attract customers, and grow their businesses faster.
+        </li>
+    </ul>
+</section>
+
+<section class="container-fluid bg-light py-5 text-center shadow-lg">
+    <h2 class="fw-bold">Stay Updated!</h2>
+    <p class="lead">Subscribe to our newsletter and be the first to know about new products, services, and special offers.</p>
+
+    <form method="POST" class="d-flex justify-content-center">
+        <input type="email" name="email" class="form-control w-50 p-3" placeholder="Enter your email" required>
+        <p><input type="button" class=" btn btn-primary ms-3 p-3" value="Submit"></p>
+    </form>
 </section>
 
 {% endblock %}

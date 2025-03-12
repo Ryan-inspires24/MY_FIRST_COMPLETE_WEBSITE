@@ -8,7 +8,7 @@ if __name__=="_main_":
 def home():
     premium_listings = [
         {
-            'src': "https://www.thespruceeats.com/thmb/OKSqgccSeO5wre18AmbSphwHDS8=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/GettyImages-466093316-5a734f2ac5542e003656e324.jpg",
+            'src':'',
             'title': 'Extra Large Chocolate Easter Eggs - Special Offer',
             'caption': 'Easter is around the corner!!! Place your orders for delicious chocolate-flavored Easter eggs.'
         },
