@@ -1,3 +1,26 @@
+<link rel="stylesheet" href="static/styles.css">
+
 {% extends "base_template.html" %}
-{% block title %} category {{category_dropdown}} - CamInspo{% endblock %}
-{%block content%}{% endblock %}
+{% block title %} {{ category.title }} - CamInspo {% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="category">
+    <h2>{{ category.title }}</h2>
+    <h3>Browse over 600 products in this category!</h3>
+
+    <div class="row">
+        {% for listing in category.listings %}
+        <div class="col-sm-12 col-xl-3 card shadow-sm border-0 h-100">
+            <img src="{{ listing.img_url }}" alt="{{ listing.title }}" class="img-fluid">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title fw-bold">{{ listing.title }}</h5>
+                <p class="lead card-text flex-grow-1">{{ listing.description }}</p>
+                <button class="btn btn-success mt-3">
+                    <i class="bi bi-calendar-check"></i> Book Now
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
