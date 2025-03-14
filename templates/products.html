@@ -1,5 +1,32 @@
+<link rel="stylesheet" href="static/styles.css">
 {% extends "base_template.html" %}
+{% block title %} Products Page - CamInspo{% endblock %}
 
-{% block title %} Products - CamInspo{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-center mb-4">Products Page</h2>
+    <div class="row text-center mb-4">
+        <h4>Explore our wide range of products from trusted vendors.</h4>
+    </div>
 
-{% block content %}{% endblock %}
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-6 col-xl-4 col-sm-11 mx-auto">
+            <div class="card shadow-sm border-1 h-100">
+                <img src="{{ product.image }}" class="card-img-top rounded-top img-fluid">
+                <div class="card-body d-flex flex-column">
+                    <h3 class="card-title fw-bold">{{ product.name }}</h3>
+                    <p class="card-text">
+                        <strong>Price:</strong> <span class="text-success">{{ product.price }}XAF</span>
+                    </p>
+                    <p class="card-text">
+                        <strong>Category:</strong> <span class="text-muted">{{ product.category }}</span>
+                    </p>
+                    <a href="product_details.html" class="btn btn-primary mt-auto">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

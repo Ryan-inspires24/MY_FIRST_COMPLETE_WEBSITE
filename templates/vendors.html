@@ -1,5 +1,32 @@
+<link rel="stylesheet" href="static/styles.css">
 {% extends "base_template.html" %}
-
 {% block title %} Vendors Page - CamInspo{% endblock %}
 
-{% block content %}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-center mb-4">Vendors Page</h2>
+    <div class="row text-center mb-4">
+        <h4>Meet our vendors and the services they offer.</h4>
+    </div>
+
+    <div class="row g-4">
+        {% for vendor in vendors %}
+        <div class="col-md-6 col-xl-4 col-sm-11 mx-auto">
+            <div class="card shadow-sm border-1 h-100">
+                <img src="{{ vendor.profile_pic }}" class="card-img-top rounded-top img-fluid">
+                <div class="card-body d-flex flex-column">
+                    <h3 class="card-title fw-bold">{{ vendor.business_name }}</h3>
+                    <p class="card-text">
+                        <strong>Category:</strong> <span class="text-muted">{{ vendor.category }}</span>
+                    </p>
+                    <a href="vendor_profile.html" class="btn btn-primary mt-auto">View Profile</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+
+

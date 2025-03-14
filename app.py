@@ -41,14 +41,59 @@ def home():
 
     return render_template('index.html', premium_listings=premium_listings)
 
-
-@app.route('/vendors')
+vendors = [
+      {
+          "profile_pic" : "",
+       "business_name" : "Rarity_Inspires_Makeup",
+       "category" : "Beauty"
+      },
+      {
+           "profile_pic" : "",
+       "business_name" : "Rarity_Inspires_Makeup",
+       "category" : "Beauty"
+      },
+      {
+           "profile_pic" : "",
+       "business_name" : "Rarity_Inspires_Makeup",
+       "category" : "Beauty"
+      },
+      {
+           "profile_pic" : "",
+       "business_name" : "Rarity_Inspires_Makeup",
+       "category" : "Beauty"
+      }
+    ]
+@app.route('/vendors.html')
 def vendors_page():
-    return render_template('vendors.html')
+    return render_template('vendors.html', vendors=vendors)
 
-@app.route('/products')
+
+products = [
+    {
+        "name": "Marley Twists",
+        "price": 15000,
+        "category": "Beauty",
+        "image": "static/images/leather_bag.jpg"
+    },
+    {
+        "name": "Home-Made Poulet DJ",
+        "price": 3500,
+        "category": "Food",
+        "image": ""
+    },
+    {
+        "name": "Organic Honey Mask",
+        "price": 2000,
+        "category": "Food & Beverage",
+        "image": ""
+    }
+]
+
+@app.route('/products.html')
 def products_page():
-    return render_template('products.html')
+    return render_template("products.html", products=products)
+
+
 
 @app.route('/about.html')
 def about_page():
@@ -112,6 +157,5 @@ def category_page(category_name):
     category = categories_data.get(category_name) 
     
     return render_template('category.html', category=category)
-
 
 
