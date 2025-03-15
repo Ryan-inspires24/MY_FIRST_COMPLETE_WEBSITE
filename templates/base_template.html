@@ -67,7 +67,7 @@
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <form method="post" enctype="multipart/form-data">
+                                <form method="POST" enctype="multipart/form-data" action="/login">
                                     <div class="mb-3">
                                         <label for="login_username" class="form-label">Enter your username </label>
                                         <input type="text" class="form-control" id="login_username"
@@ -98,38 +98,47 @@
                                 <h3>Create an account on CamInspo to get started with sky-rocketting your business!</h3>
                                 </p>
                             </div>
-                            <form methods="[GET, POST]" enctype="multipart/form-data">
+                            <form method="POST" action="/register" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <label for="first_name" class="form-label">Enter your First Name</label>
-                                    <input type="text" name="first_name" id="first_name" class="form-control">
+                                    <input type="text" name="first_name" id="first_name" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="surname" class="form-label">Enter your Surname/Family Name </label>
-                                    <input type="text" name="surname" id="surname" class="form-control">
+                                    <label for="surname" class="form-label">Enter your Surname/Family Name</label>
+                                    <input type="text" name="surname" id="surname" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="register_username" class="form-label">Enter your preferred
-                                        Username</label>
-                                    <input type="text" name="register_username" id="register_username"
-                                        class="form-control">
+                                    <label for="register_username" class="form-label">Enter your preferred Username</label>
+                                    <input type="text" name="register_username" id="register_username" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="" class="form-label">Enter your Email Adress</label>
-                                    <input type="email" name="email" id="email" class="form-control">
+                                    <label for="email" class="form-label">Enter your Email Address</label>
+                                    <input type="email" name="email" id="email" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="phone_number" class="form-label"> Enter your Phone Number</label>
-                                    <input type="tel" name="phone_number" id="phone_number" class="form-control">
+                                    <label for="phone_number" class="form-label">Enter your Phone Number</label>
+                                    <input type="tel" name="phone_number" id="phone_number" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="password" class="form-label">Enter Phone Number</label>
-                                    <input type="password" name="register_password" id="register_password"
-                                        class="form-control">
+                                    <label for="register_password" class="form-label">Enter your Password</label>
+                                    <input type="password" name="register_password" id="register_password" class="form-control" required>
                                 </div>
-                                <input type="button" id="register_btn" class="btn btn-primary" value="REGISTER">
-                                <input type="button" id="login_btn" class="btn btn-secondary" value="Login">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Select Category</label>
+                                    <select name="category" id="category" class="form-control" required>
+                                        <option value="Arts and Artifacts">Arts and Artifacts</option>
+                                        <option value="Beauty">Beauty</option>
+                                        <option value="Food">Food</option>
+       
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Enter a Description</label>
+                                    <textarea name="description" id="description" class="form-control" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Register</button>
                             </form>
-                        </div>
+                                    </div>
 
                     </div>
 

@@ -1,9 +1,89 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, flash
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from werkzeug.security import generate_password_hash
+
 
 app = Flask(__name__)
-if __name__=="_main_":
-    app.run(debug=True)
-    
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
+app.secret_key = 'Gxo/24#9' 
+
+db= SQLAlchemy(app)
+
+class Product_categories(db.Model):
+    category_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+
+class Vendors(db.Model):
+    vendor_id= db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), nullable=False, unique=True)
+    description = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.Text(255), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    vendor_email = db.Column(db.String(255), nullable=False, unique=True)
+    phone_number = db.Column(db.String(15), nullable=True)  # Allowing NULL if phone_number is not provided
+    reg_date = db.Column(db.DateTime, default=datetime.utcnow)
+    profile_pic = db.Column(db.String(255), nullable=False, unique=True)
+    products = db.relationship('Products',  back_populates='vendor', lazy=True)
+
+
+class Products(db.Model):
+    product_id = db.Column(db.Integer, primary_key=True)
+    product_name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    product_pic = db.Column(db.String(255), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('product_categories.category_id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.vendor_id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    vendor = db.relationship('Vendors', back_populates='products', lazy=True)
+
+    category = db.relationship('Product_categories', backref=db.backref('category_relationship', lazy=True))
+
+@app.route('/register', methods=['GET','POST'])
+def register():
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        surname = request.form.get('surname')
+        username = request.form.get('register_username')
+        email = request.form.get('email')
+        phone_number = request.form.get('phone_number')
+        password = request.form.get('register_password')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        
+
+        hashed_password = generate_password_hash(password)
+
+        if not (first_name and surname and username and email and phone_number and password and category and description):
+            flash("All fields are required!", "danger")
+            return redirect('/register')
+
+        new_vendor = Vendors(
+            username=username,
+            description=description, 
+            category=category,  
+            password=hashed_password,
+            vendor_email=email,
+            reg_date=datetime.utcnow()
+        )
+
+        try:
+            db.session.add(new_vendor)
+            db.session.commit()
+            flash("Registration successful!", "success")
+            return redirect('/login')
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error: {e}", "danger")
+
+    return render_template('/base_template.html')
+
+@app.route('/db_setup')
+def db_setup():
+        db.create_all() 
+        return 'CamInspo Database successfully created!'
 @app.route('/')
 def home():
     premium_listings = [
@@ -158,4 +238,6 @@ def category_page(category_name):
     
     return render_template('category.html', category=category)
 
-
+if __name__=="_main_":
+    app.run(debug=True)
+    
