@@ -23,3 +23,9 @@ a:hover{
     width: 100%;
 }
 
+.form-section {
+    display: none;
+}
+.form-section.active {
+    display: block; 
+}

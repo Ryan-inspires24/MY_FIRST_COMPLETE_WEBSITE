@@ -8,40 +8,44 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
 app.secret_key = 'Gxo/24#9' 
 
-db= SQLAlchemy(app)
+db = SQLAlchemy(app)
 
-class Product_categories(db.Model):
+class Product_categories(db.Model): 
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
 
 class Vendors(db.Model):
-    vendor_id= db.Column(db.Integer, primary_key=True)
+    vendor_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(255), nullable=False) 
+    surname = db.Column(db.String(255), nullable=False) 
     username = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.Text(255), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(255), nullable=False) 
+    password = db.Column(db.String(512), nullable=False) 
     vendor_email = db.Column(db.String(255), nullable=False, unique=True)
-    phone_number = db.Column(db.String(15), nullable=True)  # Allowing NULL if phone_number is not provided
+    phone_number = db.Column(db.String(15), nullable=False)  
     reg_date = db.Column(db.DateTime, default=datetime.utcnow)
-    profile_pic = db.Column(db.String(255), nullable=False, unique=True)
-    products = db.relationship('Products',  back_populates='vendor', lazy=True)
+    profile_pic = db.Column(db.String(255), nullable=True)
+
+    products = db.relationship('Products', back_populates='vendor', lazy=True)
 
 
 class Products(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     product_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    product_pic = db.Column(db.String(255), nullable=False)
+    product_pic = db.Column(db.String(255), nullable=True)
     price = db.Column(db.Float, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('product_categories.category_id'), nullable=False)
     vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.vendor_id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
+    category = db.relationship('Product_categories', backref="products") 
 
-    category = db.relationship('Product_categories', backref=db.backref('category_relationship', lazy=True))
 
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         first_name = request.form.get('first_name')
@@ -53,32 +57,39 @@ def register():
         description = request.form.get('description')
         category = request.form.get('category')
         
+        
+        print(f"Received: {first_name}, {surname}, {username}, {email}, {phone_number}, {password}, {category}, {description}")
 
-        hashed_password = generate_password_hash(password)
 
         if not (first_name and surname and username and email and phone_number and password and category and description):
             flash("All fields are required!", "danger")
+            print('missing field detected')
             return redirect('/register')
+        
+        hashed_password = generate_password_hash(password)
 
         new_vendor = Vendors(
+            first_name=first_name,  
+            surname=surname, 
             username=username,
-            description=description, 
-            category=category,  
+            description=description,
+            category=category,
             password=hashed_password,
             vendor_email=email,
+            phone_number=phone_number, 
             reg_date=datetime.utcnow()
         )
+        print('Attempting to save new_vendor to CamInspo.')
 
-        try:
-            db.session.add(new_vendor)
-            db.session.commit()
-            flash("Registration successful!", "success")
-            return redirect('/login')
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error: {e}", "danger")
+        
+        db.session.add(new_vendor)
+        db.session.commit()
+        print('Vendor saved successfully')
+        
+       
 
-    return render_template('/base_template.html')
+    return render_template('base_template.html') 
+
 
 @app.route('/db_setup')
 def db_setup():
