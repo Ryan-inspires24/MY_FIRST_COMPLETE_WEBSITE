@@ -1,49 +1,56 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, jsonify
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash
 
 
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
 app.secret_key = 'Gxo/24#9' 
 
-db= SQLAlchemy(app)
+db = SQLAlchemy(app)
 
-class Product_categories(db.Model):
+class Product_categories(db.Model): 
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
 
 class Vendors(db.Model):
-    vendor_id= db.Column(db.Integer, primary_key=True)
+    vendor_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(255), nullable=False) 
+    surname = db.Column(db.String(255), nullable=False) 
     username = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.Text(255), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(255), nullable=False) 
+    password = db.Column(db.String(512), nullable=False) 
     vendor_email = db.Column(db.String(255), nullable=False, unique=True)
-    phone_number = db.Column(db.String(15), nullable=True)  # Allowing NULL if phone_number is not provided
+    phone_number = db.Column(db.String(20), nullable=False)  
     reg_date = db.Column(db.DateTime, default=datetime.utcnow)
-    profile_pic = db.Column(db.String(255), nullable=False, unique=True)
-    products = db.relationship('Products',  back_populates='vendor', lazy=True)
+    profile_pic = db.Column(db.String(255), nullable=True)
+
+    products = db.relationship('Products', back_populates='vendor', lazy=True)
 
 
 class Products(db.Model):
     product_id = db.Column(db.Integer, primary_key=True)
     product_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    product_pic = db.Column(db.String(255), nullable=False)
+    product_pic = db.Column(db.String(255), nullable=True)
     price = db.Column(db.Float, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('product_categories.category_id'), nullable=False)
     vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.vendor_id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
+    category = db.relationship('Product_categories', backref="products") 
 
-    category = db.relationship('Product_categories', backref=db.backref('category_relationship', lazy=True))
 
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        profile_picture = request.form.get('profile_picture')
         first_name = request.form.get('first_name')
         surname = request.form.get('surname')
         username = request.form.get('register_username')
@@ -53,37 +60,60 @@ def register():
         description = request.form.get('description')
         category = request.form.get('category')
         
+        
+        print(f"Received: {profile_picture} {first_name}, {surname}, {username}, {email}, {phone_number}, {password}, {category}, {description}")
 
+
+        if not (profile_picture, first_name and surname and username and email and phone_number and password and category and description):
+            flash("All fields are required!", "danger")
+            print('missing field detected')
+            return redirect('/register')
+        
         hashed_password = generate_password_hash(password)
 
-        if not (first_name and surname and username and email and phone_number and password and category and description):
-            flash("All fields are required!", "danger")
-            return redirect('/register')
-
         new_vendor = Vendors(
+            first_name=first_name,  
+            surname=surname, 
             username=username,
-            description=description, 
-            category=category,  
+            description=description,
+            category=category,
             password=hashed_password,
             vendor_email=email,
-            reg_date=datetime.utcnow()
+            phone_number=str(phone_number), 
+            reg_date=datetime.utcnow(),
+            profile_pic = profile_picture
         )
+        print('Attempting to save new_vendor to CamInspo.')
 
-        try:
-            db.session.add(new_vendor)
-            db.session.commit()
-            flash("Registration successful!", "success")
-            return redirect('/login')
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error: {e}", "danger")
+        
+        db.session.add(new_vendor)
+        db.session.commit()
+        print('Vendor saved successfully')
+        
+       
 
-    return render_template('/base_template.html')
+    return render_template('base_template.html') 
+
 
 @app.route('/db_setup')
 def db_setup():
         db.create_all() 
         return 'CamInspo Database successfully created!'
+    
+@app.route('/check_username', methods=['GET'])
+def check_username():
+    username = request.args.get('username')
+    if not username:
+        try:
+            user_exists = db.session.query(Vendors).filter_by(username=username).first() is not None
+            return jsonify({"available": not user_exists})
+        except Exception as e:
+            print("Error checking username:", str(e)) 
+            return jsonify({"error": "Server error"}), 500
+    
+    user_exists = Vendors.query.filter_by(username=username).first()
+    return jsonify({"available": not user_exists})
+    
 @app.route('/')
 def home():
     premium_listings = [

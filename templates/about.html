@@ -1,5 +1,37 @@
+<link rel="stylesheet" href="static/styles.css">
+
 {% extends "base_template.html" %}
 
-{% block title %} About Page - CamInspo{% endblock %}
+{% block title %} About Page - CamInspo {% endblock %}
+{% block content %}
 
-{% block content %}{% endblock %}
+<div class="container mt-4 shadow p-4 bg-white rounded">
+    <div class="row">
+        <h2 class="fw-bold text-primary">About Us</h2>
+    </div>
+    <div class="row">
+        <div class="col-sm-12 col-xl-6 col-md-8 p-3">
+            <p class="lead p-3">
+                CamInspo is an Online Market Hub designed to empower small Cameroonian businesses and showcase 
+                authentic local services to both national and international audiences.
+            </p>
+            <p class="lead p-3">
+                In a country that is often overlooked globally, many talented entrepreneurs and professionals struggle 
+                to gain recognition. CamInspo aims to change that by:
+            </p>
+            <ul class="list-group p-3">
+                <li class="lead"> Connecting businesses with potential clients and investors.</li>
+                <li class="lead"> Providing a trusted platform for showcasing high-quality products and services.</li>
+                <li class="lead"> Enhancing the visibility of Cameroonian talent through digital exposure.</li>
+                <li class="lead"> Encouraging local and international collaborations for sustainable growth.</li>
+            </ul>
+            <p class="lead p-3">
+                 CamInspo is built on a vision of innovation, resilience, 
+                and economic empowerment. Our mission is to <strong>inspire</strong>, <strong>support</strong>, and <strong>elevate</strong> Cameroon's entrepreneurial 
+                spirit, ensuring that great ideas and businesses thrive beyond borders.
+            </p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

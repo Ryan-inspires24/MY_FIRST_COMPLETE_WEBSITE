@@ -23,3 +23,27 @@ a:hover{
     width: 100%;
 }
 
+.form-section {
+    display: none;
+}
+.form-section.active {
+    display: block;
+
+}
+
+
+.is-invalid {
+    border-color: red;
+}
+
+.invalid-feedback {
+    color: red;
+    display: none;
+}
+
+
+input.is-invalid + .invalid-feedback,
+select.is-invalid + .invalid-feedback,
+textarea.is-invalid + .invalid-feedback {
+    display: block;
+}
