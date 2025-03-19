@@ -1,0 +1,22 @@
+#header {
+    background-color:#EBE8DB;
+    color:#BE5985;
+}
+
+#navigation{
+    background-color: #D76C82;
+
+}
+
+a{
+    color:#280c18;
+}
+
+a:hover{
+    color: #B03052;
+}
+
+#footer{
+    background-color: #3D0301;
+    color: #D76C82;
+}
