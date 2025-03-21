@@ -26,7 +26,9 @@ class Vendors(db.Model):
     category = db.Column(db.String(255), nullable=False) 
     password = db.Column(db.String(512), nullable=False) 
     vendor_email = db.Column(db.String(255), nullable=False, unique=True)
+<<<<<<< HEAD
     phone_number = db.Column(db.String(20), nullable=False)  
+
     reg_date = db.Column(db.DateTime, default=datetime.utcnow)
     profile_pic = db.Column(db.String(255), nullable=True)
 
@@ -71,6 +73,7 @@ def register():
         
         hashed_password = generate_password_hash(password)
 
+
         new_vendor = Vendors(
             first_name=first_name,  
             surname=surname, 
@@ -82,6 +85,7 @@ def register():
             phone_number=str(phone_number), 
             reg_date=datetime.utcnow(),
             profile_pic = profile_picture
+
         )
         print('Attempting to save new_vendor to CamInspo.')
 

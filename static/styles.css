@@ -27,6 +27,7 @@ a:hover{
     display: none;
 }
 .form-section.active {
+
     display: block;
 
 }
