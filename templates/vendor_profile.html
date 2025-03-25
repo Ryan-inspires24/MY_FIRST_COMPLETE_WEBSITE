@@ -1,0 +1,39 @@
+{% extends "base_template.html" %}
+{% block title %} Vendor Profile {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <img src="{{ vendor.profile_pic }}" class="img-fluid rounded-circle shadow" alt="Vendor Profile Picture">
+       
+        </div>
+
+        <div class="col-md-8">
+            <h4 class="fw-bold">About the Vendor</h4>
+            <p>{{ vendor.description }}</p>
+
+            <h4 class="fw-bold mt-4">Contact Details</h4>
+            <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a></p>
+            <p><strong>Phone:</strong> {{ vendor.phone }}</p>
+            <p><strong>Location:</strong> {{ vendor.location }}</p>
+
+            <h4 class="fw-bold mt-4">Products & Services</h4>
+            <div class="row g-3">
+                {% for product in vendor.products %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-1 h-100">
+                        <img src="{{ product.image }}" class="card-img-top img-fluid rounded">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title fw-bold">{{ product.name }}</h5>
+                            <p class="card-text"><strong>Price:</strong> {{ product.price }} XAF</p>
+                            <a href="{{ url_for('product_details', product_id=product.id) }}" class="btn btn-primary mt-auto">View Product</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

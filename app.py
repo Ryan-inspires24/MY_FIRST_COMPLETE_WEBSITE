@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, jsonify
+from flask import Flask, render_template, request, redirect, flash, jsonify, url_for
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -23,10 +23,8 @@ class Vendors(db.Model):
     surname = db.Column(db.String(255), nullable=False) 
     username = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.String(255), nullable=False) 
-    password = db.Column(db.String(512), nullable=False) 
     vendor_email = db.Column(db.String(255), nullable=False, unique=True)
-<<<<<<< HEAD
+    password =db.Column(db.String(255), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)  
 
     reg_date = db.Column(db.DateTime, default=datetime.utcnow)
@@ -48,6 +46,8 @@ class Products(db.Model):
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
     category = db.relationship('Product_categories', backref="products") 
 
+@app.route('/add_product', methods=['GET','POST'])
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -60,13 +60,12 @@ def register():
         phone_number = request.form.get('phone_number')
         password = request.form.get('register_password')
         description = request.form.get('description')
-        category = request.form.get('category')
         
         
-        print(f"Received: {profile_picture} {first_name}, {surname}, {username}, {email}, {phone_number}, {password}, {category}, {description}")
+        print(f"Received: {profile_picture} {first_name}, {surname}, {username}, {email}, {phone_number}, {password}, {description}")
 
 
-        if not (profile_picture, first_name and surname and username and email and phone_number and password and category and description):
+        if not (profile_picture, first_name and surname and username and email and phone_number and password and description):
             flash("All fields are required!", "danger")
             print('missing field detected')
             return redirect('/register')
@@ -79,7 +78,6 @@ def register():
             surname=surname, 
             username=username,
             description=description,
-            category=category,
             password=hashed_password,
             vendor_email=email,
             phone_number=str(phone_number), 
@@ -93,10 +91,17 @@ def register():
         db.session.add(new_vendor)
         db.session.commit()
         print('Vendor saved successfully')
-        
+        flash ("Registration Successful! Welcome" + first_name,"success")
+        return redirect(url_for('me_page', vendor_id=new_vendor.vendor_id))
        
 
     return render_template('base_template.html') 
+
+@app.route('/me/<int:vendor_id>')
+def me_page(vendor_id):
+    vendor = Vendors.query.get_or_404(vendor_id)
+    return render_template('me_page.html', vendor=vendor)
+
 
 
 @app.route('/db_setup')
@@ -155,56 +160,16 @@ def home():
 
     return render_template('index.html', premium_listings=premium_listings)
 
-vendors = [
-      {
-          "profile_pic" : "",
-       "business_name" : "Rarity_Inspires_Makeup",
-       "category" : "Beauty"
-      },
-      {
-           "profile_pic" : "",
-       "business_name" : "Rarity_Inspires_Makeup",
-       "category" : "Beauty"
-      },
-      {
-           "profile_pic" : "",
-       "business_name" : "Rarity_Inspires_Makeup",
-       "category" : "Beauty"
-      },
-      {
-           "profile_pic" : "",
-       "business_name" : "Rarity_Inspires_Makeup",
-       "category" : "Beauty"
-      }
-    ]
+
 @app.route('/vendors.html')
 def vendors_page():
+    vendors = Vendors.query.all()
     return render_template('vendors.html', vendors=vendors)
 
 
-products = [
-    {
-        "name": "Marley Twists",
-        "price": 15000,
-        "category": "Beauty",
-        "image": "static/images/leather_bag.jpg"
-    },
-    {
-        "name": "Home-Made Poulet DJ",
-        "price": 3500,
-        "category": "Food",
-        "image": ""
-    },
-    {
-        "name": "Organic Honey Mask",
-        "price": 2000,
-        "category": "Food & Beverage",
-        "image": ""
-    }
-]
-
 @app.route('/products.html')
 def products_page():
+    products=Products.query.all()
     return render_template("products.html", products=products)
 
 
@@ -271,6 +236,91 @@ def category_page(category_name):
     category = categories_data.get(category_name) 
     
     return render_template('category.html', category=category)
+
+products = [
+    {
+        "id": 1,
+        "name": "Laptop",
+        "price": 250000,
+        "category": "Electronics",
+        "image": "/static/images/laptop.jpg",
+        "description": "High-performance laptop with 16GB RAM and 512GB SSD.",
+        "stock": 5,
+        "vendor": {"name": "TechWorld", "profile_pic": "/static/images/vendor1.jpg"}
+    },
+    {
+        "id": 2,
+        "name": "Smartphone",
+        "price": 150000,
+        "category": "Electronics",
+        "image": "/static/images/phone.jpg",
+        "description": "Latest smartphone with AMOLED display and 128GB storage.",
+        "stock": 10,
+        "vendor": {"name": "MobileHub", "profile_pic": "/static/images/vendor2.jpg"}
+    }
+]
+
+@app.route('/product/<int:product_id>')
+def product_details(product_id):
+    product = next((p for p in products if p["id"] == product_id), None)
+    if product:
+        return render_template("product_details.html", product=product)
+    return "Product not found", 404
+
+
+
+vendors = [
+    {
+        "id": 1,
+        "business_name": "TechWorld",
+        "category": "Electronics",
+        "profile_pic": "/static/images/vendor1.jpg",
+        "description": "TechWorld provides top-quality gadgets and electronic accessories.",
+        "email": "contact@techworld.com",
+        "phone": "+237 673456789",
+        "location": "Douala, Cameroon",
+        "products": [
+            {
+                "id": 1,
+                "name": "Laptop",
+                "price": 250000,
+                "image": "/static/images/laptop.jpg"
+            },
+            {
+                "id": 2,
+                "name": "Smartphone",
+                "price": 150000,
+                "image": "/static/images/phone.jpg"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "business_name": "Fashion Trends",
+        "category": "Beauty",
+        "profile_pic": "/static/images/vendor2.jpg",
+        "description": "Fashion Trends offers stylish and affordable clothing for men and women.",
+        "email": "info@fashiontrends.com",
+        "phone": "+237 654321987",
+        "location": "Yaoundé, Cameroon",
+        "products": [
+            {
+                "id": 3,
+                "name": "Designer Dress",
+                "price": 50000,
+                "image": "/static/images/dress.jpg"
+            }
+        ]
+    }
+]
+
+@app.route('/vendor/<int:vendor_id>')
+def vendor_profile(vendor_id):
+    vendor = next((v for v in vendors if v["id"] == vendor_id), None)
+    if vendor:
+        return render_template("vendor_profile.html", vendor=vendor)
+    return "Vendor not found", 404
+
 
 if __name__=="_main_":
     app.run(debug=True)

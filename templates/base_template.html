@@ -92,82 +92,39 @@
                     </div>
                 </div>
 
-                <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true"
-                    tabindex="-1">
+                <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
                             <div class="modal-header">
-                                <h5 class="modal-title">Create an account on CamInspo to get started with sky-rocketing
-                                    your business!</h5>
+                                <h5 class="modal-title">Create an account on CamInspo to get started with sky-rocketing your business!</h5>
                             </div>
                             <div class="modal-body">
                                 <form method="POST" action="/register" enctype="multipart/form-data" id="multiStepForm">
-
+                                    
                                     <div class="form-section active" id="personalInfo">
                                         <h6>Personal Info</h6>
-
+                                        <div class="mb-3">
+                                            <label for="profile_picture" class="form-label">Upload a Profile Picture</label>
+                                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" accept="image/*" required>
+                                        </div>
                                         <div class="mb-3">
                                             <label for="first_name" class="form-label">Enter your First Name</label>
-                                            <input type="text" name="first_name" id="first_name" class="form-control"
-                                                required>
+                                            <input type="text" name="first_name" id="first_name" class="form-control" required pattern="[A-Za-z]+">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="surname" class="form-label">Enter your Surname/Family
-                                                Name</label>
-                                            <input type="text" name="surname" id="surname" class="form-control"
-                                                required>
+                                            <label for="surname" class="form-label">Enter your Surname/Family Name</label>
+                                            <input type="text" name="surname" id="surname" class="form-control" required pattern="[A-Za-z]+">
                                         </div>
-
                                         <div class="mb-3">
-                                            <label for="profile_picture" class="form-label">Upload a Profile
-                                                Picture</label>
-                                            <input type="file" name="profile_picture" id="profile_picture"
-                                                class="form-control" accept="image/*" required>
-                                            <div class="invalid-feedback" id="profilePictureError"
-                                                style="display: none;">Please upload a
-                                                profile picture.</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="first_name" class="form-label">Enter your First Name</label>
-                                            <input type="text" name="first_name" id="first_name" class="form-control"
-                                                required pattern="[A-Za-z]+" title="Only alphabets are allowed">
-                                            <div class="invalid-feedback" id="firstNameError" style="display: none;">
-                                                Please enter your First
-                                                Name.</div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="surname" class="form-label">Enter your Surname/Family
-                                                Name</label>
-                                            <input type="text" name="surname" id="surname" class="form-control" required
-                                                pattern="[A-Za-z]+" title="Only alphabets are allowed">
-                                            <div class="invalid-feedback" id="surnameError">Please enter your surname.
-                                            </div>
-                                        </div>
-
-
-                                        <div class="mb-3">
-                                            <label for="register_username" class="form-label">Enter your preferred
-                                                Username</label>
-                                            <input type="text" name="register_username" id="register_username"
-                                                class="form-control" required>
-                                        </div>
-                                               <input class="form-control" required onkeyup="check_username()"
-                                                pattern="^[A-Za-z0-9_]+$"
-                                                title="Username can only contain letters, numbers, and underscores">
+                                            <label for="register_username" class="form-label">Enter your Username</label>
+                                            <input type="text" name="register_username" id="register_username" class="form-control" onblur="check_username()" required>
                                             <p id="status"></p>
-                                            <div class="invalid-feedback" id="usernameError">
-                                                Please choose a valid
-                                                username.</div>
                                         </div>
-
                                         <div class="text-end">
-                                            <button type="button" class="btn btn-primary"
-                                                id="nextToContact">Next</button>
+                                            <button type="button" class="btn btn-primary" id="nextToContact">Next</button>
                                         </div>
                                     </div>
-
+                                    
                                     <div class="form-section" id="contactInfo">
                                         <h6>Contact Info</h6>
                                         <div class="mb-3">
@@ -176,99 +133,32 @@
                                         </div>
                                         <div class="mb-3">
                                             <label for="phone_number" class="form-label">Enter your Phone Number</label>
-                                            <input type="tel" name="phone_number" id="phone_number" class="form-control"
-                                                required>
+                                            <input type="tel" name="phone_number" id="phone_number" class="form-control" required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="register_password" class="form-label">Enter a Password</label>
-                                            <input type="password" name="register_password" id="register_password" class="form-control"
-                                                required>
+                                            <input type="password" name="register_password" id="register_password" class="form-control" required minlength="6">
                                         </div>
-
-                                    <div class="form-section" id="contactInfo">
-                                        <h6>Contact Info</h6>
-
-
-                                        <div class="mb-3">
-                                            <label for="email" class="form-label">Enter your Email Address</label>
-                                            <input type="email" name="email" id="email" class="form-control" onblur="check_email()" title="Enter a valid email address">
-                                               
-                                            <p id="email_status"></p>
-                                            <div class="invalid-feedback" id="emailError">Please
-                                                enter a valid email
-                                                address.</div>
-                                        </div>
-
-
-                                        <div class="mb-3">
-                                            <label for="phone_number" class="form-label">Enter your Phone Number</label>
-                                            <input type="tel" name="phone_number" id="phone_number" class="form-control"
-                                                required pattern="^\+?[1-9]\d{1,14}$"
-                                                title="Enter a valid phone number">
-                                            <div class="invalid-feedback" id="phone_numberError">
-                                                Please enter a valid phone
-                                                number.</div>
-                                        </div>
-
-
-                                        <div class="mb-3">
-                                            <label for="register_password" class="form-label">Enter a Password</label>
-                                            <input type="password" name="register_password" id="register_password"
-                                                class="form-control" required minlength="6"
-                                                title="Password must be at least 6 characters long">
-                                            <div class="invalid-feedback" id="register_passwordError">Password must be
-                                                at least 6
-                                                characters long.</div>
-                                        </div>
-
                                         <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary"
-                                                id="prevToPersonal">Previous</button>
-                                            <button type="button" class="btn btn-primary"
-                                                id="nextToBusiness">Next</button>
+                                            <button type="button" class="btn btn-secondary" id="prevToPersonal">Previous</button>
+                                            <button type="button" class="btn btn-primary" id="nextToBusiness">Next</button>
                                         </div>
                                     </div>
-
+                                    
                                     <div class="form-section" id="businessInfo">
                                         <h6>Business Info</h6>
-
-
-                                    <div class="form-section" id="businessInfo">
-                                        <h6>Business Info</h6>
-
-
                                         <div class="mb-3">
-                                            <label for="category" class="form-label">Select Category</label>
-                                            <select name="category" id="category" class="form-control" required>
-                                                <option value="Arts and Artifacts">Arts and Artifacts</option>
-                                                <option value="Beauty">Beauty</option>
-                                                <option value="Food">Food</option>
-                                            </select>
-
+                                            <label for="description" class="form-label">Describe your business</label>
+                                            <textarea name="description" id="description" class="form-control" required></textarea>
                                         </div>
-
-                                            <div class="invalid-feedback" id="categoryError">
-                                                Please select a category.
-                                            </div>
-                                        </div>
-
-
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Enter a Description</label>
-                                            <textarea name="description" id="description" class="form-control"
-                                                required></textarea>
-                                        </div>
-                                            <div class="invalid-feedback" id="descriptionError">
-                                                Please provide a description.</div>
-                                        </div>
-
                                         <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary"
-                                                id="prevToContact">Previous</button>
+                                            <button type="button" class="btn btn-secondary" id="prevToContact">Previous</button>
                                             <button type="submit" class="btn btn-success">Submit</button>
                                         </div>
                                     </div>
                                 </form>
+                          
+                
                                 <script>
                                     const formSections = document.querySelectorAll('.form-section');
                                     let currentSection = 0;
