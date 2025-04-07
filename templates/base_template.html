@@ -92,39 +92,50 @@
                     </div>
                 </div>
 
-                <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true" tabindex="-1">
+                <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true"
+                    tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
                             <div class="modal-header">
-                                <h5 class="modal-title">Create an account on CamInspo to get started with sky-rocketing your business!</h5>
+                                <h5 class="modal-title">Create an account on CamInspo to get started with sky-rocketing
+                                    your business!</h5>
                             </div>
                             <div class="modal-body">
-                                <form method="POST" action="/register" enctype="multipart/form-data" id="multiStepForm">
-                                    
+                                <form method="POST" action="/api/register" enctype="multipart/form-data"
+                                    id="multiStepForm">
+
                                     <div class="form-section active" id="personalInfo">
                                         <h6>Personal Info</h6>
                                         <div class="mb-3">
-                                            <label for="profile_picture" class="form-label">Upload a Profile Picture</label>
-                                            <input type="file" name="profile_picture" id="profile_picture" class="form-control" accept="image/*" required>
+                                            <label for="profile_picture" class="form-label">Upload a Profile
+                                                Picture</label>
+                                            <input type="file" name="profile_picture" id="profile_picture"
+                                                class="form-control" accept="image/*" required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="first_name" class="form-label">Enter your First Name</label>
-                                            <input type="text" name="first_name" id="first_name" class="form-control" required pattern="[A-Za-z]+">
+                                            <input type="text" name="first_name" id="first_name" class="form-control"
+                                                required pattern="[A-Za-z]+">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="surname" class="form-label">Enter your Surname/Family Name</label>
-                                            <input type="text" name="surname" id="surname" class="form-control" required pattern="[A-Za-z]+">
+                                            <label for="surname" class="form-label">Enter your Surname/Family
+                                                Name</label>
+                                            <input type="text" name="surname" id="surname" class="form-control" required
+                                                pattern="[A-Za-z]+">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="register_username" class="form-label">Enter your Username</label>
-                                            <input type="text" name="register_username" id="register_username" class="form-control" onblur="check_username()" required>
+                                            <label for="register_username" class="form-label">Enter your
+                                                Username</label>
+                                            <input type="text" name="register_username" id="register_username"
+                                                class="form-control" onblur=check_username() required>
                                             <p id="status"></p>
                                         </div>
                                         <div class="text-end">
-                                            <button type="button" class="btn btn-primary" id="nextToContact">Next</button>
+                                            <button type="button" class="btn btn-primary"
+                                                id="nextToContact">Next</button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="form-section" id="contactInfo">
                                         <h6>Contact Info</h6>
                                         <div class="mb-3">
@@ -133,132 +144,169 @@
                                         </div>
                                         <div class="mb-3">
                                             <label for="phone_number" class="form-label">Enter your Phone Number</label>
-                                            <input type="tel" name="phone_number" id="phone_number" class="form-control" required>
+                                            <input type="tel" name="phone_number" id="phone_number" class="form-control"
+                                                required>
                                         </div>
                                         <div class="mb-3">
                                             <label for="register_password" class="form-label">Enter a Password</label>
-                                            <input type="password" name="register_password" id="register_password" class="form-control" required minlength="6">
+                                            <input type="password" name="register_password" id="register_password"
+                                                class="form-control" required minlength="6">
                                         </div>
                                         <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary" id="prevToPersonal">Previous</button>
-                                            <button type="button" class="btn btn-primary" id="nextToBusiness">Next</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                id="prevToPersonal">Previous</button>
+                                            <button type="button" class="btn btn-primary"
+                                                id="nextToBusiness">Next</button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="form-section" id="businessInfo">
                                         <h6>Business Info</h6>
                                         <div class="mb-3">
                                             <label for="description" class="form-label">Describe your business</label>
-                                            <textarea name="description" id="description" class="form-control" required></textarea>
+                                            <textarea name="description" id="description" class="form-control"
+                                                required></textarea>
                                         </div>
                                         <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary" id="prevToContact">Previous</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                id="prevToContact">Previous</button>
+                                            <p id="messageBox"></p>
+
                                             <button type="submit" class="btn btn-success">Submit</button>
+                                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                            {% if messages %}
+                                            {% for category, message in messages %}
+                                            <div class="alert alert-{{ category }} alert-dismissible fade show"
+                                                role="alert">
+                                                {{ message }}
+                                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            {% endfor %}
+                                            {% endif %}
+                                            {% endwith %}
+
                                         </div>
                                     </div>
                                 </form>
-                          
-                
+
                                 <script>
+
                                     const formSections = document.querySelectorAll('.form-section');
                                     let currentSection = 0;
+
                                     function showSection(index) {
                                         formSections.forEach((section, idx) => {
-                                            section.classList.toggle('active', idx === index);
+                                            section.style.display = idx === index ? 'block' : 'none';
                                         });
                                     }
 
+                                    showSection(currentSection);
+
                                     document.getElementById('nextToContact').addEventListener('click', () => {
-                                        formSections[currentSection].classList.remove('active');
-                                        currentSection += 1;
-                                        formSections[currentSection].classList.add('active');
-                                        showSection(currentSection)
+                                        if (currentSection < formSections.length - 1) {
+                                            currentSection++;
+                                            showSection(currentSection);
+                                        }
                                     });
 
                                     document.getElementById('prevToPersonal').addEventListener('click', () => {
-                                        formSections[currentSection].classList.remove('active');
-                                        currentSection -= 1;
-                                        formSections[currentSection].classList.add('active');
-                                        showSection(currentSection)
+                                        if (currentSection > 0) {
+                                            currentSection--;
+                                            showSection(currentSection);
+                                        }
                                     });
 
                                     document.getElementById('nextToBusiness').addEventListener('click', () => {
-                                        formSections[currentSection].classList.remove('active');
-                                        currentSection += 1;
-                                        formSections[currentSection].classList.add('active');
-                                        showSection(currentSection)
+                                        if (currentSection < formSections.length - 1) {
+                                            currentSection++;
+                                            showSection(currentSection);
+                                        }
                                     });
 
                                     document.getElementById('prevToContact').addEventListener('click', () => {
-                                        formSections[currentSection].classList.remove('active');
-                                        currentSection -= 1;
-                                        formSections[currentSection].classList.add('active');
-                                        showSection(currentSection)
-
+                                        if (currentSection > 0) {
+                                            currentSection--;
+                                            showSection(currentSection);
+                                        }
                                     });
 
-                                    function check_username() {
-                                        let username = document.getElementById("register_username").value;
-                                        let statusText = document.getElementById("status")
 
-                                        if (username.length === 0) {
-                                            statusText.innerHTML = "";
-                                            return;
-                                        }
-                                        fetch(`http://127.0.0.1:5000/check_username?username=${username}`).then(response => response.json())
-                                            .then(data => {
-                                                if (data.available) {
-                                                    statusText.innerHTML = " Username is available";
-                                                    statusText.style.color = "green";
-                                                }
-                                                else {
-                                                    statusText.innerHTML = " Username is already taken";
-                                                    statusText.style.color = "red";
-                                                }
-                                            })
-                                            .catch(error => {
-                                                console.error("Error:", error);
-                                                statusText.innerHTML = " Error checking username";
-                                                statusText.color = "orange";
-                                            });
-                                    }
 
-                                    function check_email() {
-                                        let email = document.getElementById('email').value
-                                        let email_statusText = document.getElementById('email_status')
+                                    // document.getElementById("multiStepForm").addEventListener("submit", async function (event) {
+                                    //     event.preventDefault();
 
-                                        if (email.length === 0) {
-                                            email_statusText = "";
-                                            return;
-                                        }
+                                    //     let formData = {
+                                    //         first_name: document.getElementById("first_name").value,
+                                    //         surname: document.getElementById("surname").value,
+                                    //         register_username: document.getElementById("register_username").value,
+                                    //         email: document.getElementById("email").value,
+                                    //         phone_number: document.getElementById("phone_number").value,
+                                    //         register_password: document.getElementById("register_password").value,
+                                    //         description: document.getElementById("description").value
+                                    //     };
 
-                                        const email_pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                        if (!email_pattern.test(email)) {
-                                            email_statusText.innerHTML = "Invalid email format";
-                                            email_statusText.style.color = "orange";
-                                            return;
-                                        }
+                                    //     try {
+                                    //         let response = await fetch("http://127.0.0.1:5000/api/register", {
+                                    //             method: "POST",
+                                    //             headers: {
+                                    //                 "Content-Type": "application/json"
+                                    //             },
+                                    //             body: formData
+                                    //         });
 
-                                        fetch(`http://127.0.0.1:5000/check_email?email=${encodeURIComponent(email)}`)
-                                            .then(response => response.json())
-                                            .then(data => {
-                                                if (data.available) {
-                                                    email_statusText.innerHTML = "Email is available";
-                                                    email_statusText.style.color = "green";
-                                                } else {
-                                                    emailStatusText.innerHTML = "Email is already taken";
-                                                    emailStatusText.style.color = "red";
-                                                }
-                                            })
-                                            .catch(error => {
-                                                console.error("Error:", error);
-                                                email_statusText.innerHTML = "Error checking email";
-                                                email_statusText.style.color = "orange";
-                                            console.log(email_statusText)
-                                            });
-                                    }
-                                    
+                                    //         let data = await response.json();
+                                    //         let messageBox = document.getElementById('message_box');
+                                    //         document.getElementById("messageBox").innerText = data.message || data.error;
+                                    //         document.getElementById("messageBox").style.color = data.message ? "green" : "red";
+
+                                    //         if (data.messageBox) {
+                                    //             document.getElementById('multiStepForm').reset();
+                                    //         }
+                                    //     } catch (error) {
+                                    //         console.error("Error:", error);
+                                    //         alert("An error occurred. Please try again.");
+                                    //     }
+                                    // });
+                                    // document.getElementById("login_btn").addEventListener("click", async function (event) {
+                                    //     event.preventDefault(); // Prevent form submission
+
+                                    //     const username = document.getElementById("login_username").value;
+                                    //     const password = document.getElementById("login_password").value;
+
+                                    //     if (!username || !password) {
+                                    //         alert("Please enter both username and password.");
+                                    //         return;
+                                    //     }
+
+                                    //     try {
+                                    //         const response = await fetch("/login", {
+                                    //             method: "POST",
+                                    //             headers: {
+                                    //                 "Content-Type": "application/json",
+                                    //             },
+                                    //             body: JSON.stringify({
+                                    //                 login_username: username,
+                                    //                 login_password: password,
+                                    //             }),
+                                    //         });
+
+                                    //         const data = await response.json();
+
+                                    //         if (response.ok) {
+                                    //             alert("Login successful!");
+                                    //             window.location.href = "me_page";
+                                    //         } else {
+                                    //             alert(data.error || "Invalid username or password.");
+                                    //         }
+                                    //     } catch (error) {
+                                    //         console.error("Error:", error);
+                                    //         alert("An error occurred while logging in.");
+                                    //     }
+                                    // });
+
                                 </script>
+
                             </div>
                         </div>
                     </div>

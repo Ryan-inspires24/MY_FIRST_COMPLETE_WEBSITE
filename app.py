@@ -1,14 +1,18 @@
-from flask import Flask, render_template, request, redirect, flash, jsonify, url_for
+from flask import Flask, render_template, request, redirect, flash, jsonify, url_for, abort, session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+import requests
+
+import os
 
 
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
 app.secret_key = 'Gxo/24#9' 
+app.config['UPLOAD_FOLDER'] = 'static/uploads/'
 
 db = SQLAlchemy(app)
 
@@ -46,56 +50,7 @@ class Products(db.Model):
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
     category = db.relationship('Product_categories', backref="products") 
 
-@app.route('/add_product', methods=['GET','POST'])
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        profile_picture = request.form.get('profile_picture')
-        first_name = request.form.get('first_name')
-        surname = request.form.get('surname')
-        username = request.form.get('register_username')
-        email = request.form.get('email')
-        phone_number = request.form.get('phone_number')
-        password = request.form.get('register_password')
-        description = request.form.get('description')
-        
-        
-        print(f"Received: {profile_picture} {first_name}, {surname}, {username}, {email}, {phone_number}, {password}, {description}")
-
-
-        if not (profile_picture, first_name and surname and username and email and phone_number and password and description):
-            flash("All fields are required!", "danger")
-            print('missing field detected')
-            return redirect('/register')
-        
-        hashed_password = generate_password_hash(password)
-
-
-        new_vendor = Vendors(
-            first_name=first_name,  
-            surname=surname, 
-            username=username,
-            description=description,
-            password=hashed_password,
-            vendor_email=email,
-            phone_number=str(phone_number), 
-            reg_date=datetime.utcnow(),
-            profile_pic = profile_picture
-
-        )
-        print('Attempting to save new_vendor to CamInspo.')
-
-        
-        db.session.add(new_vendor)
-        db.session.commit()
-        print('Vendor saved successfully')
-        flash ("Registration Successful! Welcome" + first_name,"success")
-        return redirect(url_for('me_page', vendor_id=new_vendor.vendor_id))
-       
-
-    return render_template('base_template.html') 
+# @app.route('/add_product', methods=['GET','POST'])
 
 @app.route('/me/<int:vendor_id>')
 def me_page(vendor_id):
@@ -109,20 +64,134 @@ def db_setup():
         db.create_all() 
         return 'CamInspo Database successfully created!'
     
-@app.route('/check_username', methods=['GET'])
-def check_username():
-    username = request.args.get('username')
-    if not username:
-        try:
-            user_exists = db.session.query(Vendors).filter_by(username=username).first() is not None
-            return jsonify({"available": not user_exists})
-        except Exception as e:
-            print("Error checking username:", str(e)) 
-            return jsonify({"error": "Server error"}), 500
+
+@app.route('/vendors.html')
+def vendors_page():
+    vendors = Vendors.query.all()  
+    return render_template('vendors.html', vendors=vendors)
+
+@app.route('/products.html')
+def products_page():
+    products = Products.query.all()  
+    return render_template("products.html", products=products)
+
+@app.route('/product/<int:product_id>')
+def product_details(product_id):
+    product = Products.query.get(product_id)  
+    if product:
+        return render_template("product_details.html", product=product)
+    return "Product not found", 404
+
+@app.route('/vendor/<int:vendor_id>')
+def vendor_profile(vendor_id):
+    vendor = Vendors.query.get(vendor_id)
+    if not vendor:
+        abort(404) 
+    return render_template("vendor_profile.html", vendor=vendor)
+
+@app.route('/about.html')
+def about_page():
+    return render_template('about.html')
+
+
+@app.route('/api/register', methods=['POST', 'GET'])
+def register():
+    # if 'profile_picture' not in request.files:
+    #     return jsonify({"error": "Profile picture is required"}), 400
+    if request.method =='POST':
+        profile_picture = request.files['profile_picture']
+        first_name = request.form.get('first_name')
+        surname = request.form.get('surname')
+        username = request.form.get('register_username')
+        email = request.form.get('email')
+        phone_number = request.form.get('phone_number')
+        password = request.form.get('register_password')
+        description = request.form.getlist('description')
+
+        # if not all([first_name, surname, username, email, phone_number, password, description]):
+        #     return jsonify({"error": "All fields are required!"}), 400
+        
+        # if Vendors.query.filter_by(vendor_email=email).first():
+        #     return jsonify({"error": "Email already registered"}), 400
+        
+        # if Vendors.query.filter_by(username=username).first():
+        #     return jsonify({"error": "Username already exists"}), 400
+        
+        files=[]
+        for pic in profile_picture:
+          files.append('inline', (pic.filename, pic.stream, pic.mimetype))  
+        
+        url = "https://api.mailgun.net/v3/sandbox731194d37470413e8c548a52a345d7c7.mailgun.org/messages"
+        data={
+            'from' : 'contactformservices@sandbox731194d37470413e8c548a52a345d7c7.mailgun.org',
+                'to' : [email],
+                'subject' : 'Successful Registration!',
+                'text': f' Welcome {username}. ',
+                'html' : f'''
+                        <html>
+                        <body>
+                        <h2> Hi {username}! Welcome to CamInspo Market Hub.</h2>
+                        <strong>Your Info</strong>
+                        <ul> Username - {username} </ul>
+                        <ul> Email Adress - {email} </ul>
+                        <ul> Phone Number - {phone_number} </ul>
+
+                        <p> What are you waiting for? upload images to your product informtion on your account and access over 500000 customers! </p>
+                        </body>
+                        </html>
+                            '''
+            }
+        files = files
+        auth = ("api", "04e7193703a33f3123f6eb1cf196e9bb-24bda9c7-1550a8f8")
+        
+        response = requests.post(url, auth=auth, data=data, files=files)
+        print('Response Status Code: ', response.status_code)
+        print(response.json())
+        flash(f'{username} registered with success!', 'success')
+    return render_template('base_template.html')
     
-    user_exists = Vendors.query.filter_by(username=username).first()
-    return jsonify({"available": not user_exists})
+
+
+#     filename = f"{username}_{profile_picture.filename}"
+#     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+#     profile_picture.save(filepath)
+
+#     hashed_password = generate_password_hash(password)
+
+#     new_vendor = Vendors(
+#         first_name=first_name,
+#         surname=surname,
+#         username=username,
+#         vendor_email=email,
+#         phone_number=phone_number,
+#         password=hashed_password,
+#         description=description,
+#         profile_pic=filepath  
+#     )
+
+#     db.session.add(new_vendor)
+#     db.session.commit()
+
+#     return jsonify({"message": "Registration successful!", "vendor_id": new_vendor.vendor_id}), 201
     
+
+
+# @app.route('/login', methods=['POST'])
+# def login():
+#     username = request.form.get('login_username')
+#     password = request.form.get('login_password')
+
+#     user = Vendors.query.filter_by(username=username).first()
+
+#     if user and check_password_hash(user.password, password): 
+#         session['user_id'] = user.vendor_id
+#         session['username'] = user.username
+#         flash("login Successful", "success")
+#         return redirect(url_for('me_page'))
+#     else:
+#         flash('Either username,password or both are incorrect.','danger')
+#         return redirect(url_for('vendors_page'))
+     
 @app.route('/')
 def home():
     premium_listings = [
@@ -161,22 +230,6 @@ def home():
     return render_template('index.html', premium_listings=premium_listings)
 
 
-@app.route('/vendors.html')
-def vendors_page():
-    vendors = Vendors.query.all()
-    return render_template('vendors.html', vendors=vendors)
-
-
-@app.route('/products.html')
-def products_page():
-    products=Products.query.all()
-    return render_template("products.html", products=products)
-
-
-
-@app.route('/about.html')
-def about_page():
-    return render_template('about.html')
 
 categories_data = {
     "Arts and Artifacts": {
@@ -236,91 +289,6 @@ def category_page(category_name):
     category = categories_data.get(category_name) 
     
     return render_template('category.html', category=category)
-
-products = [
-    {
-        "id": 1,
-        "name": "Laptop",
-        "price": 250000,
-        "category": "Electronics",
-        "image": "/static/images/laptop.jpg",
-        "description": "High-performance laptop with 16GB RAM and 512GB SSD.",
-        "stock": 5,
-        "vendor": {"name": "TechWorld", "profile_pic": "/static/images/vendor1.jpg"}
-    },
-    {
-        "id": 2,
-        "name": "Smartphone",
-        "price": 150000,
-        "category": "Electronics",
-        "image": "/static/images/phone.jpg",
-        "description": "Latest smartphone with AMOLED display and 128GB storage.",
-        "stock": 10,
-        "vendor": {"name": "MobileHub", "profile_pic": "/static/images/vendor2.jpg"}
-    }
-]
-
-@app.route('/product/<int:product_id>')
-def product_details(product_id):
-    product = next((p for p in products if p["id"] == product_id), None)
-    if product:
-        return render_template("product_details.html", product=product)
-    return "Product not found", 404
-
-
-
-vendors = [
-    {
-        "id": 1,
-        "business_name": "TechWorld",
-        "category": "Electronics",
-        "profile_pic": "/static/images/vendor1.jpg",
-        "description": "TechWorld provides top-quality gadgets and electronic accessories.",
-        "email": "contact@techworld.com",
-        "phone": "+237 673456789",
-        "location": "Douala, Cameroon",
-        "products": [
-            {
-                "id": 1,
-                "name": "Laptop",
-                "price": 250000,
-                "image": "/static/images/laptop.jpg"
-            },
-            {
-                "id": 2,
-                "name": "Smartphone",
-                "price": 150000,
-                "image": "/static/images/phone.jpg"
-            }
-        ]
-    },
-    {
-        "id": 2,
-        "business_name": "Fashion Trends",
-        "category": "Beauty",
-        "profile_pic": "/static/images/vendor2.jpg",
-        "description": "Fashion Trends offers stylish and affordable clothing for men and women.",
-        "email": "info@fashiontrends.com",
-        "phone": "+237 654321987",
-        "location": "Yaoundé, Cameroon",
-        "products": [
-            {
-                "id": 3,
-                "name": "Designer Dress",
-                "price": 50000,
-                "image": "/static/images/dress.jpg"
-            }
-        ]
-    }
-]
-
-@app.route('/vendor/<int:vendor_id>')
-def vendor_profile(vendor_id):
-    vendor = next((v for v in vendors if v["id"] == vendor_id), None)
-    if vendor:
-        return render_template("vendor_profile.html", vendor=vendor)
-    return "Vendor not found", 404
-
 
 if __name__=="_main_":
     app.run(debug=True)
