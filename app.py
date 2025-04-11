@@ -3,8 +3,10 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import json
 import requests
-
+import traceback
 import os
 
 
@@ -50,12 +52,12 @@ class Products(db.Model):
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
     category = db.relationship('Product_categories', backref="products") 
 
-# @app.route('/add_product', methods=['GET','POST'])
 
-@app.route('/me/<int:vendor_id>')
+@app.route('/me_page/<int:vendor_id>')
 def me_page(vendor_id):
     vendor = Vendors.query.get_or_404(vendor_id)
-    return render_template('me_page.html', vendor=vendor)
+    products= Products.query.filter_by(vendor_id=vendor_id).all()
+    return render_template('me_page.html', vendor=vendor, products=products)
 
 
 
@@ -94,104 +96,170 @@ def about_page():
     return render_template('about.html')
 
 
+@app.route('/api/check_username')
+def check_username():
+    username = request.args.get('username', '').strip()
+
+    if not username:
+        return jsonify({'available': False, 'error': 'Username required'}), 400
+
+    exists = db.session.query(Vendors.vendor_id).filter_by(username=username).first() is not None
+
+    return jsonify({'available': not exists})
+
+
+
 @app.route('/api/register', methods=['POST', 'GET'])
 def register():
-    # if 'profile_picture' not in request.files:
-    #     return jsonify({"error": "Profile picture is required"}), 400
     if request.method =='POST':
-        profile_picture = request.files['profile_picture']
         first_name = request.form.get('first_name')
         surname = request.form.get('surname')
         username = request.form.get('register_username')
         email = request.form.get('email')
         phone_number = request.form.get('phone_number')
         password = request.form.get('register_password')
-        description = request.form.getlist('description')
+        description = request.form.get('description')
 
-        # if not all([first_name, surname, username, email, phone_number, password, description]):
-        #     return jsonify({"error": "All fields are required!"}), 400
-        
-        # if Vendors.query.filter_by(vendor_email=email).first():
-        #     return jsonify({"error": "Email already registered"}), 400
-        
-        # if Vendors.query.filter_by(username=username).first():
-        #     return jsonify({"error": "Username already exists"}), 400
-        
-        files=[]
-        for pic in profile_picture:
-          files.append('inline', (pic.filename, pic.stream, pic.mimetype))  
-        
-        url = "https://api.mailgun.net/v3/sandbox731194d37470413e8c548a52a345d7c7.mailgun.org/messages"
-        data={
-            'from' : 'contactformservices@sandbox731194d37470413e8c548a52a345d7c7.mailgun.org',
-                'to' : [email],
-                'subject' : 'Successful Registration!',
-                'text': f' Welcome {username}. ',
-                'html' : f'''
-                        <html>
-                        <body>
-                        <h2> Hi {username}! Welcome to CamInspo Market Hub.</h2>
-                        <strong>Your Info</strong>
-                        <ul> Username - {username} </ul>
-                        <ul> Email Adress - {email} </ul>
-                        <ul> Phone Number - {phone_number} </ul>
+        print([first_name, surname, username, email, phone_number, password, description])
 
-                        <p> What are you waiting for? upload images to your product informtion on your account and access over 500000 customers! </p>
-                        </body>
-                        </html>
-                            '''
-            }
-        files = files
-        auth = ("api", "04e7193703a33f3123f6eb1cf196e9bb-24bda9c7-1550a8f8")
+        try:
+            if not all([first_name, surname, username, email, phone_number, password, description]):
+                return jsonify({"error": "All fields are required!"}), 400
+            
+            if Vendors.query.filter_by(vendor_email=email).first():
+                return jsonify({"error": "Email already registered"}), 400
+            
+            if Vendors.query.filter_by(username=username).first():
+                return jsonify({"error": "Username already exists"}), 400
+            
         
-        response = requests.post(url, auth=auth, data=data, files=files)
-        print('Response Status Code: ', response.status_code)
-        print(response.json())
-        flash(f'{username} registered with success!', 'success')
+            
+            profile_picture = request.files.get('profile_picture')
+            
+            image_filename = None
+            if profile_picture and profile_picture.filename != '':
+                filename = secure_filename(profile_picture.filename)
+                image_path = os.path.join(app.root_path, 'static', 'vendor_images', filename)
+                profile_picture.save(image_path)
+                image_filename = filename
+            else:
+                profile_picture = None
+                            
+            hashed_password = generate_password_hash(password)
+
+            new_vendor = Vendors(
+            first_name=first_name,
+            surname=surname,
+            username=username,
+            vendor_email=email,
+            phone_number=phone_number,
+            password=hashed_password,
+            description=description,
+            profile_pic= image_filename
+            )
+
+            db.session.add(new_vendor)
+            db.session.commit()
+            img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
+
+            print(f'{username} registered successfully')
+            return jsonify({"message": "Registration successful!", 
+                            "vendor_id": new_vendor.vendor_id,
+                            'img_url' : img_url
+                            }), 201
+        except Exception as e:
+            return jsonify({'error': str(e)}), 401
+            
+    
     return render_template('base_template.html')
     
-
-
-#     filename = f"{username}_{profile_picture.filename}"
-#     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#     profile_picture.save(filepath)
-
-#     hashed_password = generate_password_hash(password)
-
-#     new_vendor = Vendors(
-#         first_name=first_name,
-#         surname=surname,
-#         username=username,
-#         vendor_email=email,
-#         phone_number=phone_number,
-#         password=hashed_password,
-#         description=description,
-#         profile_pic=filepath  
-#     )
-
-#     db.session.add(new_vendor)
-#     db.session.commit()
-
-#     return jsonify({"message": "Registration successful!", "vendor_id": new_vendor.vendor_id}), 201
+@app.route('/check_email')
+def check_email():
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'available': False})
     
+    user = Vendors.query.filter_by(vendor_email=email).first()
+    return jsonify({'available': user is None})
+
+@app.route('/add_product', methods=['POST'])
+def add_product():
+    try:
+        product_name = request.form['product_name']
+        description = request.form['description']
+        price = float(request.form['price'])
+        vendor_id = int(request.form['vendor_id'])
+        category_id = int(request.form['category']) 
 
 
-# @app.route('/login', methods=['POST'])
-# def login():
-#     username = request.form.get('login_username')
-#     password = request.form.get('login_password')
+        product_pic = request.files.get('product_pic')
+        image_filename = None
 
-#     user = Vendors.query.filter_by(username=username).first()
+        if product_pic and product_pic.filename != '':
+            filename = secure_filename(product_pic.filename)
+            
+            image_path = os.path.join(app.root_path, 'static', 'product_images', filename)
+            product_pic.save(image_path)
+            
+            image_filename = filename
 
-#     if user and check_password_hash(user.password, password): 
-#         session['user_id'] = user.vendor_id
-#         session['username'] = user.username
-#         flash("login Successful", "success")
-#         return redirect(url_for('me_page'))
-#     else:
-#         flash('Either username,password or both are incorrect.','danger')
-#         return redirect(url_for('vendors_page'))
-     
+        new_product = Products(
+            product_name=product_name,
+            description=description,
+            price=price,
+            vendor_id=vendor_id,
+            product_pic=image_filename,
+            category_id = category_id
+        )
+
+        db.session.add(new_product)
+        db.session.commit()
+
+        img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
+        print("Product Name:", product_name)
+        print("Price:", price)
+        print("Image Filename:", image_filename)
+
+        return jsonify({
+            'success': True,
+            'product_name': product_name,
+            'price': price,
+            'img_url': img_url
+        })
+
+    except Exception as e:
+        print("Error adding product:", e)
+        print(traceback.format_exc())  
+
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    username = request.form.get('login_username')
+    password = request.form.get('login_password')
+
+    print(f"Form username: {username}")
+    print(f"Form password: {password}")
+
+    user = Vendors.query.filter_by(username=username).first()
+
+    if user and check_password_hash(user.password, password): 
+        session['vendor_id'] = user.vendor_id
+        session['username'] = user.username
+        return jsonify({
+            'message': 'Login successful',
+            'vendor_id': user.vendor_id
+        }), 200
+    else:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()  
+    return redirect(url_for('vendors_page'))  
+   
 @app.route('/')
 def home():
     premium_listings = [
