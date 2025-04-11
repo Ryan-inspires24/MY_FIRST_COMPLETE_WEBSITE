@@ -52,6 +52,21 @@ class Products(db.Model):
     vendor = db.relationship('Vendors', back_populates='products', lazy=True)
     category = db.relationship('Product_categories', backref="products") 
 
+class Clients(db.Model):
+    client_id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(255), nullable=False)
+    surname = db.Column(db.String(255), nullable=False)
+    username = db.Column(db.String(255), nullable=False, unique=True)
+    client_email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    reg_date = db.Column(db.DateTime, default=datetime.utcnow)
+    profile_pic = db.Column(db.String(255), nullable=True)
+
+    comments = db.relationship('Comment', backref='client', lazy=True)
+    
+
+
 
 @app.route('/me_page/<int:vendor_id>')
 def me_page(vendor_id):
@@ -107,11 +122,60 @@ def check_username():
 
     return jsonify({'available': not exists})
 
-
-
 @app.route('/api/register', methods=['POST', 'GET'])
 def register():
-    if request.method =='POST':
+    if request.method == 'POST':
+        user_type = request.form.get('user_type')  # Get user type from form
+        
+        if user_type == 'vendor':
+            return jsonify({"redirect": "/me_page/vendor"}), 200  # Send a redirect response to the frontend
+        elif user_type == 'client':
+            return jsonify({"redirect": "/"})  # No redirection, stay on the landing page
+        else:
+            return jsonify({"error": "Invalid user type!"}), 400
+
+    return render_template('register_choice.html')  # Display user type choice page
+
+
+@app.route('/api/register/client', methods=['POST'])
+def register_client():
+    if request.method == 'POST':
+        # Client-specific fields
+        username = request.form.get('register_username')
+        email = request.form.get('email')
+        phone_number = request.form.get('phone_number')
+        password = request.form.get('register_password')
+
+        # Make sure all client fields are provided
+        if not all([username, email, phone_number, password]):
+            return jsonify({"error": "All fields are required!"}), 400
+        
+        if Clients.query.filter_by(client_email=email).first():
+            return jsonify({"error": "Email already registered"}), 400
+
+        if Clients.query.filter_by(username=username).first():
+            return jsonify({"error": "Username already exists"}), 400
+        
+        hashed_password = generate_password_hash(password)
+
+        new_client = Clients(
+            username=username,
+            client_email=email,
+            phone_number=phone_number,
+            password=hashed_password
+        )
+        db.session.add(new_client)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Registration successful!",
+            "client_id": new_client.client_id
+        }), 201
+    
+@app.route('/api/register/vendor', methods=['POST'])
+def register_vendor():
+    if request.method == 'POST':
+        # Vendor-specific fields
         first_name = request.form.get('first_name')
         surname = request.form.get('surname')
         username = request.form.get('register_username')
@@ -120,34 +184,27 @@ def register():
         password = request.form.get('register_password')
         description = request.form.get('description')
 
-        print([first_name, surname, username, email, phone_number, password, description])
-
-        try:
-            if not all([first_name, surname, username, email, phone_number, password, description]):
-                return jsonify({"error": "All fields are required!"}), 400
-            
-            if Vendors.query.filter_by(vendor_email=email).first():
-                return jsonify({"error": "Email already registered"}), 400
-            
-            if Vendors.query.filter_by(username=username).first():
-                return jsonify({"error": "Username already exists"}), 400
-            
+        # Make sure all vendor fields are provided
+        if not all([first_name, surname, username, email, phone_number, password, description]):
+            return jsonify({"error": "All fields are required!"}), 400
         
-            
-            profile_picture = request.files.get('profile_picture')
-            
-            image_filename = None
-            if profile_picture and profile_picture.filename != '':
-                filename = secure_filename(profile_picture.filename)
-                image_path = os.path.join(app.root_path, 'static', 'vendor_images', filename)
-                profile_picture.save(image_path)
-                image_filename = filename
-            else:
-                profile_picture = None
-                            
-            hashed_password = generate_password_hash(password)
+        if Vendors.query.filter_by(vendor_email=email).first():
+            return jsonify({"error": "Email already registered"}), 400
+        
+        if Vendors.query.filter_by(username=username).first():
+            return jsonify({"error": "Username already exists"}), 400
+        
+        profile_picture = request.files.get('profile_picture')
+        image_filename = None
+        if profile_picture and profile_picture.filename != '':
+            filename = secure_filename(profile_picture.filename)
+            image_path = os.path.join(app.root_path, 'static', 'vendor_images', filename)
+            profile_picture.save(image_path)
+            image_filename = filename
+        
+        hashed_password = generate_password_hash(password)
 
-            new_vendor = Vendors(
+        new_vendor = Vendors(
             first_name=first_name,
             surname=surname,
             username=username,
@@ -155,24 +212,19 @@ def register():
             phone_number=phone_number,
             password=hashed_password,
             description=description,
-            profile_pic= image_filename
-            )
+            profile_pic=image_filename
+        )
 
-            db.session.add(new_vendor)
-            db.session.commit()
-            img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
+        db.session.add(new_vendor)
+        db.session.commit()
+        img_url = url_for('static', filename='vendor_images/' + image_filename) if image_filename else ''
 
-            print(f'{username} registered successfully')
-            return jsonify({"message": "Registration successful!", 
-                            "vendor_id": new_vendor.vendor_id,
-                            'img_url' : img_url
-                            }), 201
-        except Exception as e:
-            return jsonify({'error': str(e)}), 401
-            
-    
+        return jsonify({
+            "message": "Registration successful!",
+            "vendor_id": new_vendor.vendor_id,
+            'img_url': img_url
+        }), 201
     return render_template('base_template.html')
-    
 @app.route('/check_email')
 def check_email():
     email = request.args.get('email')

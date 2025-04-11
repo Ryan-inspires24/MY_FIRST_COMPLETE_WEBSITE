@@ -48,3 +48,7 @@ select.is-invalid + .invalid-feedback,
 textarea.is-invalid + .invalid-feedback {
     display: block;
 }
+
+.vendor-field {
+        display: none;
+ }
