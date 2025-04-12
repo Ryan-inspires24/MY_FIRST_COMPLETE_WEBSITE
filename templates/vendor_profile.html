@@ -38,7 +38,74 @@ integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEw
                 </div>
                 {% endfor %}
             </div>
+            <div class="mt-5">
+                <h4 class="fw-bold">Comments</h4>
+                <div id="comments-box" class="border p-3 rounded-3" style="height: 300px; overflow-y: auto;">
+                </div>
+
+                <div class="d-flex mt-3">
+                    <textarea id="comment-input" class="form-control rounded-3" rows="3" placeholder="Write a message..." style="resize: none;"></textarea>
+                    <button id="send-comment" class="btn btn-success ms-2 align-self-end">
+                        <i class="bi bi-send"></i> Send
+                    </button>
+                </div>
+            </div>
         </div>
+        <div id="message-box"></div>
     </div>
+    <script>
+   document.addEventListener('DOMContentLoaded', function () {
+    const sendCommentButton = document.getElementById('send-comment');
+    const messageBox = document.getElementById('message-box');
+    const commentsContainer = document.getElementById('comments-box');
+    const commentInput = document.getElementById('comment-input');
+
+    sendCommentButton.addEventListener('click', function () {
+        const content = commentInput.value;
+
+        if (content === "") {
+            alert("Please write something before sending.");
+            return;
+        }
+
+        fetch('/api/add_comment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+            },
+            body: JSON.stringify({
+                content: content,
+                vendor_id: vendor.vendor_id,
+                user_id: current_user.id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+        
+                const newComment = document.createElement('div');
+                newComment.classList.add('comment-card', 'mt-3');
+                newComment.innerHTML = `<p><strong>${data.user_id}</strong> - ${data.created_at}</p>
+                                        <p>${data.content}</p>`;
+                commentsContainer.appendChild(newComment);
+                commentInput.value = '';  
+            } else {
+                messageBox.classList.remove('d-none');
+                messageBox.classList.add('alert', 'alert-danger');
+                messageBox.textContent = data.error || "Error occurred while posting the comment.";
+            }
+        })
+        .catch(err => {
+            messageBox.classList.remove('d-none');
+            messageBox.classList.add('alert', 'alert-danger');
+            messageBox.textContent = "An unexpected error occurred.";
+            console.error("Error submitting comment:", err);
+        });
+    });
+});
+
+
+    </script>
 </div>
 {% endblock %}
