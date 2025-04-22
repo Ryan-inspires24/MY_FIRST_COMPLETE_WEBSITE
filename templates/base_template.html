@@ -49,8 +49,8 @@
                 <ul class="dropdown-menu" aria-labelledby="category_dropdown">
                     <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#login_modal">Login</a>
                     </li>
-                    <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#register_modal">Register as a vendor</a></li>
-                    <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#register_client_modal">Register as a Client</a></li>
+                    <li><a class="dropdown-item" href="" data-bs-toggle="modal"
+                            data-bs-target="#register_modal">Register</a></li>
                 </ul>
 
                 <div class="modal fade" id="login_modal" tabindex="-1" aria-labelledby="login_modal_label"
@@ -59,9 +59,9 @@
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
                             <div class="modal-header">
-                                <p>
+
                                 <h5 class="modal-title">Login to manage your account.</h5>
-                                </p>
+
 
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
@@ -81,8 +81,8 @@
                                     </div>
                                     <div class="d-flex justify-content-between">
                                         <input type="submit" class="btn btn-primary" value="Login">
-                                        <input type="submit" class="btn btn-secondary" id="login_btn"
-                                            value="Create an account">
+                                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                                            data-bs-target="#register_modal">
 
                                     </diV>
 
@@ -91,433 +91,316 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal fade" id="register_client_modal" tabindex="-1" aria-labelledby="login_modal_label"
-                aria-hidden="true">
 
-                <div class="modal-dialog">
-                    <div class="modal-content p-3">
-                        <div class="modal-header">
-                            <p>
-                            <h5 class="modal-title">Get registered to CamInspo to have a user experience tailored just for you!</h5>
-                            </p>
-
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <form method="POST" enctype="multipart/form-data" action="/api/register_client" id="register_client_form">
-                                <div class="mb-3 form-group">
-                                    <label> Email Address</label>
-                                    <input type="email" class="form-control" name="client_email" id="client_email" required>
-                                </div>
-
-                                <div class="mb-3 form-group">
-                                    <label> Phone Number</label>
-                                    <input type="number" class="form-control" name="client_number" id="client_number" required>
-                                </div>
-
-                                <div class="mb-3 form-group">
-                                    <label for="client_password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="client_password"
-                                        name="client_password" required>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <input type="submit" class="btn btn-primary" id="client_register_btn"
-                                        value="Create Account">
-                                        <!-- <input type="submit" class="btn btn-secondary" value="Login"> -->
-
-
-                                </diV>
-
-                            </form>
-                            <div id="client_message_box" class="alert d-none" role="alert"></div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+                <!-- Registration Modal -->
                 <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true"
                     tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
                             <div class="modal-header">
-                                <h5 class="modal-title">Create an account on CamInspo to get started with sky-rocketing
-                                    your business!</h5>
+                                <h5 class="modal-title">Create an account on CamInspo</h5>
                             </div>
                             <div class="modal-body">
-                                <form method="POST" action="/api/register" enctype="multipart/form-data"
-                                    id="multiStepForm">
+                                <form method="POST" action="/register" enctype="multipart/form-data" id="multiStepForm">
 
-                                    <div class="form-section active" id="personalInfo">
-                                        <h6>Personal Info</h6>
+                                    <!-- User Type Selection -->
+                                    <div class="mb-3">
+                                        <label for="user_type" class="form-label">Select User Type</label>
+                                        <select name="user_type" id="user_type" class="form-select"
+                                            onchange="toggleUserForm()" required>
+                                            <option value="" disabled selected>Select your user type</option>
+                                            <option value="client">Client</option>
+                                            <option value="vendor">Vendor</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Vendor Registration Form -->
+                                    <div id="vendor_form" class="form-section" style="display: none;"
+                                        data-user-type="vendor">
+                                        <h6>Business Info</h6>
                                         <div class="mb-3">
                                             <label for="profile_picture" class="form-label">Upload a Profile
                                                 Picture</label>
                                             <input type="file" name="profile_picture" id="profile_picture"
-                                                class="form-control" accept="image/*" required>
+                                                class="form-control" accept="image/*">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="first_name" class="form-label">Enter your First Name</label>
+                                            <label for="first_name" class="form-label">First Name</label>
                                             <input type="text" name="first_name" id="first_name" class="form-control"
-                                                required pattern="[A-Za-z]+">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="surname" class="form-label">Enter your Surname/Family
-                                                Name</label>
-                                            <input type="text" name="surname" id="surname" class="form-control" required
                                                 pattern="[A-Za-z]+">
                                         </div>
                                         <div class="mb-3">
-                                            <label for="register_username" class="form-label">Enter your
-                                                Username</label>
-                                            <input type="text" name="register_username" id="register_username"
-                                                class="form-control" oninput="debounced_check_username()" required>
-                                            <span id="status_icon"
-                                                style="position:absolute; right: 10px; top: 38px; font-size: 1.2rem;"></span>
-                                            <p id="status" class="mt-1" style="margin-bottom: 0;"></p>
+                                            <label for="surname" class="form-label">Surname</label>
+                                            <input type="text" name="surname" id="surname" class="form-control"
+                                                pattern="[A-Za-z]+">
                                         </div>
-                                        <div class="text-end">
-                                            <button type="button" class="btn btn-primary"
-                                                id="nextToContact">Next</button>
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">Business Description</label>
+                                            <textarea name="description" id="description"
+                                                class="form-control"></textarea>
                                         </div>
                                     </div>
 
-                                    <div class="form-section" id="contactInfo">
-                                        <h6>Contact Info</h6>
-                                        <div class="mb-3">
-                                            <label for="email" class="form-label"> Email Address</label>
-                                            <input type="email" name="email" id="email" class="form-control"
-                                                oninput="check_email()" required>
-                                            <span id="email-status-icon"></span>
-                                            <p id="email-status"></p>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="phone_number" class="form-label"> Phone Number</label>
-                                            <input type="tel" name="phone_number" id="phone_number" class="form-control"
-                                                required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="register_password" class="form-label"> Create a Password</label>
-                                            <input type="password" name="register_password" id="register_password"
-                                                class="form-control" required minlength="6">
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary"
-                                                id="prevToPersonal">Previous</button>
-                                            <button type="button" class="btn btn-primary"
-                                                id="nextToBusiness">Next</button>
-                                        </div>
+                                    <!-- Client Registration Form -->
+
+
+                                    <!-- Common Fields -->
+                                    <div class="mb-3" data-user-type="all">
+                                        <label for="register_username" class="form-label">Username</label>
+                                        <input type="text" name="register_username" id="register_username"
+                                            class="form-control" oninput="debounced_check_username()" required>
+                                        <p id="status"></p><span id="status_icon"></span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email Address</label>
+                                        <input type="email" name="email" id="email" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="phone_number" class="form-label">Phone Number</label>
+                                        <input type="tel" name="phone_number" id="phone_number" class="form-control"
+                                            required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="register_password" class="form-label">Create a Password</label>
+                                        <input type="password" name="register_password" id="register_password"
+                                            class="form-control" required minlength="6">
                                     </div>
 
-                                    <div class="form-section" id="businessInfo">
-                                        <h6>Business Info</h6>
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Describe your business</label>
-                                            <textarea name="description" id="description" class="form-control"
-                                                required></textarea>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-secondary"
-                                                id="prevToContact">Previous</button>
-
-                                            <button type="submit" class="btn btn-success"
-                                                id="register_btn">Submit</button>
-
-
-
-                                        </div>
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-success" id="register_btn">Submit</button>
                                     </div>
-                                    <div id="messageBox" class="alert d-none" role="alert"></div>
-
                                 </form>
-                                {% with messages = get_flashed_messages(with_categories=true) %}
-                                {% if messages %}
-                                {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show"
-                                    role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                        aria-label="Close"></button>
-                                </div>
-
-                                {% endfor %}
-                                {% endif %}
-                                {% endwith %}
-                                <script>
-
-                                    const formSections = document.querySelectorAll('.form-section');
-                                    let currentSection = 0;
-
-                                    function showSection(index) {
-                                        formSections.forEach((section, idx) => {
-                                            section.style.display = idx === index ? 'block' : 'none';
-                                        });
-                                    }
-
-                                    document.addEventListener('DOMContentLoaded', () => {
-                                        showSection(currentSection);
-
-                                        document.getElementById('nextToContact').addEventListener('click', () => {
-                                            if (currentSection < formSections.length - 1) {
-                                                currentSection++;
-                                                showSection(currentSection);
-                                            }
-                                        });
-
-                                        document.getElementById('prevToPersonal').addEventListener('click', () => {
-                                            if (currentSection > 0) {
-                                                currentSection--;
-                                                showSection(currentSection);
-                                            }
-                                        });
-
-                                        document.getElementById('nextToBusiness').addEventListener('click', () => {
-                                            if (currentSection < formSections.length - 1) {
-                                                currentSection++;
-                                                showSection(currentSection);
-                                            }
-                                        });
-
-                                        document.getElementById('prevToContact').addEventListener('click', () => {
-                                            if (currentSection > 0) {
-                                                currentSection--;
-                                                showSection(currentSection);
-                                            }
-                                        });
-                                    });
-
-
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        const form = document.getElementById('multiStepForm');
-                                        const messageBox = document.getElementById('messageBox');
-
-                                        form.addEventListener('submit', function (e) {
-                                            e.preventDefault(); // Prevent full page reload
-
-                                            const formData = new FormData(form);
-
-                                            fetch('/api/register', {
-                                                method: 'POST',
-                                                body: formData,
-                                            })
-                                                .then(async (response) => {
-                                                    let data;
-
-                                                    try {
-                                                        data = await response.json(); // Try to parse JSON
-                                                    } catch (err) {
-                                                        throw new Error("Invalid JSON response from server");
-                                                    }
-
-                                                    // Clear previous alert classes
-                                                    messageBox.classList.remove('d-none', 'alert-success', 'alert-danger');
-
-                                                    if (response.ok) {
-                                                        messageBox.classList.add('alert', 'alert-success');
-                                                        messageBox.textContent = data.message || "Registered successfully!";
-
-                                                        // Hide modal
-                                                        const registerModalEl = document.getElementById('register_modal');
-                                                        const registerModal = bootstrap.Modal.getInstance(registerModalEl);
-                                                        if (registerModal) {
-                                                            registerModal.hide();
-                                                        }
-
-                                                        form.reset(); // Clear form
-
-                                                        // Redirect after delay
-                                                        setTimeout(() => {
-                                                            window.location.href = `/me_page/${data.vendor_id}`;
-                                                        }, 2000);
-
-                                                    } else {
-                                                        messageBox.classList.add('alert', 'alert-danger');
-                                                        messageBox.textContent = data.error || "Something went wrong.";
-                                                        setTimeout(() => {
-                                                            messageBox.classList.add('d-none');
-                                                        }, 5000);
-                                                    }
-                                                })
-                                                .catch((error) => {
-                                                    console.error(error);
-                                                    messageBox.classList.remove('d-none');
-                                                    messageBox.classList.add('alert', 'alert-danger');
-                                                    messageBox.textContent = "An unexpected error occurred.";
-                                                });
-                                        });
-                                    });
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        const form = document.getElementById('register_client_form');
-                                        const messageBox = document.getElementById('client_message_box');
-
-                                        form.addEventListener('submit', function (e) {
-                                            e.preventDefault(); // Prevent full page reload
-                                            console.log('form submitted')
-                                            const formData = new FormData(form);
-
-                                            fetch('/api/register_client', {
-                                                method: 'POST',
-                                                body: formData,
-                                            })
-                                                .then(async (response) => {
-                                                    let data;
-
-                                                    try {
-                                                        data = await response.json(); // Try to parse JSON
-                                                    } catch (err) {
-                                                        throw new Error("Invalid JSON response from server");
-                                                    }
-
-                                                    // Clear previous alert classes
-                                                    messageBox.classList.remove('d-none', 'alert-success', 'alert-danger');
-
-                                                    if (response.ok) {
-                                                        messageBox.classList.add('alert', 'alert-success');
-                                                        messageBox.textContent = data.message || "Registered successfully!";
-
-                                                        // Hide modal
-                                                        const registerModalEl = document.getElementById('register_client_modal');
-                                                        const registerModal = bootstrap.Modal.getInstance(registerModalEl);
-                                                        if (registerModal) {
-                                                            registerModal.hide();
-                                                        }
-
-                                                        form.reset(); // Clear form
-
-                                                        // Redirect after delay
-                                                        setTimeout(() => {
-                                                            window.location.href = `/products.html`;
-                                                        }, 2000);
-
-                                                    } else {
-                                                        messageBox.classList.add('alert', 'alert-danger');
-                                                        messageBox.textContent = data.error || "Something went wrong.";
-                                                        setTimeout(() => {
-                                                            messageBox.classList.add('d-none');
-                                                        }, 5000);
-                                                    }
-                                                })
-                                                .catch((error) => {
-                                                    console.error(error);
-                                                    messageBox.classList.remove('d-none');
-                                                    messageBox.classList.add('alert', 'alert-danger');
-                                                    messageBox.textContent = "An unexpected error occurred.";
-                                                });
-                                        });
-                                    });
-
-
-                                    let timeout = null;
-                                    function debounced_check_username() {
-                                        clearTimeout(timeout)
-                                        timeout = setTimeout(check_username, 500)
-                                    }
-                                    let timeout_email = null;
-                                    function debounced_check_email() {
-                                        clearTimeout(timeout_email)
-                                        timeout_email = setTimeout(check_email, 500)
-                                    }
-
-                                    async function check_username() {
-
-
-                                        const usernameInput = document.getElementById('register_username');
-                                        const status = document.getElementById('status');
-                                        const status_icon = document.getElementById('status_icon');
-
-                                        const username = usernameInput.value.trim();
-
-                                        if (username.length < 3) {
-                                            status.textContent = 'Username must be atleast three characters';
-                                            status.style.color = 'gray'
-                                            status_icon.textContent = ''
-                                            return;
-                                        }
-
-                                        fetch(`/api/check_username?username=${encodeURIComponent(username)}`)
-                                            .then(response => response.json())
-                                            .then(data => {
-                                                if (data.available) {
-                                                    status.textContent = ' Username is available';
-                                                    status.style.color = 'green';
-                                                    status_icon.textContent = '✅'
-                                                } else {
-                                                    status.textContent = ' Username is already taken';
-                                                    status.style.color = 'red';
-                                                    status_icon.textContent = '❌'
-                                                }
-                                            })
-                                            .catch(error => {
-                                                status.textContent = ' Error checking username';
-                                                status.style.color = 'orange';
-                                                console.error('Error:', error);
-                                            });
-                                    }
-
-
-                                    const loginForm = document.getElementById('login_form');
-
-                                    loginForm.addEventListener('submit', async (e) => {
-                                        e.preventDefault();
-
-                                        const formData = new FormData(loginForm);
-
-                                        const response = await fetch('/api/login', {
-                                            method: 'POST',
-                                            body: formData  // 👈 DON'T set headers manually
-                                        });
-
-                                        const data = await response.json();
-                                        if (response.ok) {
-                                            alert(data.message);
-                                            window.location.href = `/me_page/${data.vendor_id}`;
-                                        } else {
-                                            alert(data.error || 'Login failed');
-                                        }
-                                    });
-
-                                    async function check_email() {
-                                        const email_input = document.getElementById('email')
-                                        const status = document.getElementById('email-status')
-                                        const email_icon = document.getElementById('email-status-icon')
-                                        if (!email.includes('@') || email.length < 5) {
-                                            status.textContent = "Enter a valid email";
-                                            status.style.color = "gray";
-                                            email_icon.innerHTML = "";
-                                            return;
-                                        }
-
-                                        try {
-                                            const response = await fetch(`/check_email?email=${email}`);
-                                            const data = await response.json();
-
-                                            if (data.available) {
-                                                status.textContent = "Email is available";
-                                                status.style.color = "green";
-                                                email_icon.innerHTML = "✅";
-                                            } else {
-                                                statust.textContent = "Email is already in use";
-                                                statust.style.color = "red";
-                                                email_icon.innerHTML = "❌";
-                                            }
-                                        } catch (error) {
-                                            console.error('Error checking email:', error);
-                                            status.textContent = "Error checking email";
-                                            status.style.color = "orange";
-                                            email_icon.innerHTML = "";
-                                        }
-                                    }
-                                    
-                                </script>
-
-
                             </div>
                         </div>
                     </div>
                 </div>
+                <script>
+
+                    // Toggle form fields based on user type
+                    function toggleUserForm() {
+                        var userType = document.getElementById("user_type").value;
+                        if (userType === "vendor") {
+                            document.getElementById("vendor_form").style.display = "block";
+                            document.getElementById("client_form").style.display = "none";
+                        } else if (userType === "client") {
+                            document.getElementById("client_form").style.display = "block";
+                            document.getElementById("vendor_form").style.display = "none";
+                        }
+                    }
+
+                    const formSections = document.querySelectorAll('.form-section');
+                    let currentSection = 0;
+
+                    function showSection(index) {
+                        formSections.forEach((section, idx) => {
+                            section.style.display = idx === index ? 'block' : 'none';
+                        });
+                    }
+                    function toggleRequiredFields() {
+                        document.querySelectorAll('.form-section').forEach(section => {
+                            const isVisible = section.style.display !== 'none' && !section.classList.contains('d-none');
+
+                            section.querySelectorAll('input, textarea, select').forEach(field => {
+                                if (isVisible) {
+                                    field.setAttribute('required', 'required');
+                                } else {
+                                    field.removeAttribute('required');
+                                }
+                            });
+                        });
+                    }
+                    const registerBtn = document.getElementById("register_btn");
+                    if (registerBtn) {
+                        registerBtn.addEventListener("click", function (event) {
+                            event.preventDefault();
+
+                            let formData = new FormData(document.getElementById("multiStepForm"));
+                            let userType = document.getElementById("user_type").value;
+
+                            formData.append("user_type", userType);
+
+                            fetch('/api/register', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.message === "Registration successful!") {
+                                        alert('Registration successful! Redirecting...');
+                                        window.location.href = "/api/login";
+                                    } else {
+                                        alert(data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('An error occurred during registration.');
+                                });
+                        });
+                    }
+
+
+
+                    document.getElementById('login_form').addEventListener('submit', function (event) {
+                        event.preventDefault();  // Prevent the default form submission
+
+                        var formData = new FormData(this);  // Use FormData to get form inputs
+
+                        var login_url = '/api/login';
+
+                        fetch(login_url, {
+                            method: 'POST',
+                            body: formData  // Send formData directly without setting Content-Type
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    return response.json();  // Expect JSON in response
+                                }
+                                throw new Error('Login failed');
+                            })
+                            .then(data => {
+                                if (data.message === 'Login successful') {
+                                    // Redirect based on role
+                                    if (data.role === 'vendor') {
+                                        window.location.href = `/me_page/${data.user_id}`;
+                                    } else if (data.role === 'client') {
+                                        window.location.href = '/products';
+                                    }
+                                } else {
+                                    alert('Login failed');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Login failed');
+                            });
+                    });
+                    let timeout = null;
+                    function debounced_check_username() {
+                        clearTimeout(timeout)
+                        timeout = setTimeout(check_username, 500)
+                    }
+                    let timeout_email = null;
+                    function debounced_check_email() {
+                        clearTimeout(timeout_email)
+                        timeout_email = setTimeout(check_email, 500)
+                    }
+
+                    async function check_username() {
+                        const usernameInput = document.getElementById('register_username');
+                        const status = document.getElementById('status');
+                        const status_icon = document.getElementById('status_icon');
+
+                        const username = usernameInput.value.trim();
+                        const role = document.getElementById('user_type')?.value;  // get user type safely
+
+                        if (username.length < 3) {
+                            status.textContent = 'Username must be at least three characters';
+                            status.style.color = 'gray';
+                            status_icon.textContent = '';
+                            return;
+                        }
+
+                        if (!role) {
+                            status.textContent = 'Please select a user role';
+                            status.style.color = 'gray';
+                            status_icon.textContent = '';
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/check_username?username=${encodeURIComponent(username)}&role=${encodeURIComponent(role)}`);
+                            const data = await response.json();
+
+                            if (data.available) {
+                                status.textContent = ' Username is available';
+                                status.style.color = 'green';
+                                status_icon.textContent = '✅';
+                            } else {
+                                status.textContent = data.error || ' Username is already taken';
+                                status.style.color = 'red';
+                                status_icon.textContent = '❌';
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            status.textContent = ' Error checking username';
+                            status.style.color = 'orange';
+                            status_icon.textContent = '';
+                        }
+                    }
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const loginForm = document.getElementById('login_form');
+                        const loginBtn = document.getElementById('login_btn');
+
+                        loginBtn.addEventListener('click', function () {
+                            const formData = new FormData(loginForm);
+
+                            fetch('/api/login', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        window.location.href = data.redirect;
+                                    } else {
+                                        alert(data.message || 'Login failed');
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error('Login error:', err);
+                                    alert('An error occurred. Try again.');
+                                });
+                        });
+                    });
+
+                    async function check_email() {
+                        const email_input = document.getElementById('email');
+                        const status = document.getElementById('email-status');
+                        const email_icon = document.getElementById('email-status-icon');
+
+                        const email = email_input?.value.trim(); // add null check here
+
+                        if (!email || !email.includes('@') || email.length < 5) {
+                            if (status) {
+                                status.textContent = "Enter a valid email"; status.style.color = "gray";
+                            } if (email_icon) {
+                                email_icon.innerHTML = "";
+                            } return;
+                        } try {
+                            const response = await
+                                fetch(`/check_email?email=${email}`); const data = await response.json();
+                            if (data.available) {
+                                if
+                                    (status) {
+                                    status.textContent = "Email is available";
+                                    status.style.color = "green";
+                                } if (email_icon)
+                                    email_icon.innerHTML = "✅";
+                            } else {
+                                if (status) {
+                                    status.textContent = "Email is already in use"; //
+                                    status.style.color = "red";
+                                } if (email_icon) email_icon.innerHTML = "❌";
+                            }
+                        } catch
+                        (error) {
+                            console.error('Error checking email:', error);
+                            if (status) {
+                                status.textContent = "Error checking email"; status.style.color = "orange";
+                            } if (email_icon)
+                                email_icon.innerHTML = "";
+                        }
+                    } </script>
+
+
             </div>
+    </div>
+    </div>
+    </div>
+    </div>
     </div>
     </header>
 

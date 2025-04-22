@@ -7,12 +7,24 @@ from werkzeug.utils import secure_filename
 import json
 import requests
 from flask_login import LoginManager
-from flask_login import current_user
+from flask_login import current_user, logout_user, login_required, LoginManager, login_user
+from datetime import timedelta
+from sqlalchemy.ext.hybrid import hybrid_property
 import traceback
 import os
  
- 
 app = Flask(__name__)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
 app.secret_key = 'Gxo/24#9' 
@@ -24,74 +36,155 @@ def load_user(user_id):
  
 db = SQLAlchemy(app)
  
+# Product Categories
 class ProductCategories(db.Model):
     __tablename__ = 'product_categories'
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
 
-class Vendors(db.Model):
-    __tablename__ = 'vendors'
-    vendor_id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(255), nullable=False) 
-    surname = db.Column(db.String(255), nullable=False) 
-    username = db.Column(db.String(255), nullable=False, unique=True)
-    description = db.Column(db.String(255), nullable=False)
-    vendor_email = db.Column(db.String(255), nullable=False, unique=True)
-    password = db.Column(db.String(255), nullable=False)
-    phone_number = db.Column(db.String(20), nullable=False)  
-    reg_date = db.Column(db.DateTime, default=datetime.utcnow)
-    profile_pic = db.Column(db.String(255), nullable=True)
- 
-    # Relationships
-    products = db.relationship('Products', back_populates='vendor', lazy=True)
-    comments = db.relationship('Comment', back_populates='vendor', lazy=True)
+class Comment(db.Model):
+    __tablename__ = 'comment'
 
-class Products(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  
+    product_id = db.Column(db.Integer, db.ForeignKey('products.product_id'), nullable=True)
+
+    # Relationships
+    user = db.relationship('User', backref='comments_made', foreign_keys=[user_id]) 
+    vendor = db.relationship('User', back_populates='comments_received', foreign_keys=[vendor_id])
+    product = db.relationship('Product', back_populates='comments')
+
+    def __repr__(self):
+        return f'<Comment {self.id} by User {self.user_id}>'
+     
+
+class FavoriteVendor(db.Model):
+    __tablename__ = 'favorite_vendors'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # user who favorited the vendor
+    user = db.relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='favorite_vendors'
+    )
+
+    # vendor being favorited
+    vendor = db.relationship(
+        'User',
+        foreign_keys=[vendor_id],
+        back_populates='favorited_by',
+        primaryjoin='FavoriteVendor.vendor_id == User.id'
+    )
+
+    def __repr__(self):
+        return f'<FavoriteVendor user={self.user_id} vendor={self.vendor_id}>'
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    reg_date = db.Column(db.DateTime, default=datetime.utcnow)
+    role = db.Column(db.String(50))  # 'vendor' or 'client'
+
+    # For Vendors
+    first_name = db.Column(db.String(50), nullable=True)
+    surname = db.Column(db.String(50), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    profile_picture = db.Column(db.String(255), nullable=True)
+
+    # Relationships
+    favorite_vendors = db.relationship(
+        'FavoriteVendor',
+        foreign_keys=[FavoriteVendor.user_id],
+        back_populates='user',
+        cascade='all, delete-orphan'
+    )
+
+    favorited_by = db.relationship(
+        'FavoriteVendor',
+        foreign_keys=[FavoriteVendor.vendor_id],
+        back_populates='vendor',
+        cascade='all, delete-orphan'
+    )
+    
+    saved_products = db.relationship(
+        'SavedProduct',
+        back_populates='user',
+        cascade='all, delete-orphan'
+    )
+    
+    comments_received = db.relationship(
+        'Comment',
+        back_populates='vendor',
+        foreign_keys=[Comment.vendor_id]
+    )
+
+    products = db.relationship('Product', back_populates='vendor', lazy=True)
+
+    def __repr__(self):
+        return f"<User {self.username} ({self.role})>"
+
+    @property
+    def is_vendor(self):
+        return self.role == 'vendor'
+
+    @property
+    def is_client(self):
+        return self.role == 'client'
+
+
+class Product(db.Model):
     __tablename__ = 'products'
+
     product_id = db.Column(db.Integer, primary_key=True)
     product_name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     product_pic = db.Column(db.String(255), nullable=True)
     price = db.Column(db.Float, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('product_categories.category_id'), nullable=False)
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.vendor_id'), nullable=False)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    vendor = db.relationship('Vendors', back_populates='products', lazy=True)
+
+    vendor = db.relationship('User', back_populates='products')
     category = db.relationship('ProductCategories', backref="products")
     comments = db.relationship('Comment', back_populates='product', lazy=True)
 
-class Comment(db.Model):
-    __tablename__ = 'comments'
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.String(500), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, nullable=False)
-    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.vendor_id'), nullable=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.product_id'), nullable=True)
+class SavedProduct(db.Model):
+    __tablename__ = 'saved_products'
 
-    # Relationships
-    vendor = db.relationship('Vendors', back_populates='comments')
-    product = db.relationship('Products', back_populates='comments')
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.product_id'), nullable=False)
+
+    user = db.relationship('User', back_populates='saved_products')
+    product = db.relationship('Product')
 
     def __repr__(self):
-        return f'<Comment {self.id} by User {self.user_id}>'
-     
-class Clients(db.Model):
-    __tablename__ = 'clients'
-    client_id = db.Column(db.Integer, primary_key=True)
-    client_email = db.Column(db.String(255), nullable=False, unique=True)
-    phone_number = db.Column(db.String(20), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+        return f'<SavedProduct user={self.user_id} product={self.product_id}>'
 
- # @app.route('/add_product', methods=['GET','POST'])
+
 @app.route('/me_page/<int:vendor_id>')
 def me_page(vendor_id):
-     vendor = Vendors.query.get_or_404(vendor_id)
-     products= Products.query.filter_by(vendor_id=vendor_id).all()
-     return render_template('me_page.html', vendor=vendor, products=products)
+
+    if current_user.id != vendor_id:
+        return f'unauthorized' 
+
+    vendor = User.query.filter_by(id=vendor_id, role='vendor').first_or_404()
+    products = Product.query.filter_by(vendor_id=vendor_id).all()
+    return render_template('me_page.html', vendor=vendor, products=products)
 
  
  
@@ -103,24 +196,24 @@ def db_setup():
  
 @app.route('/vendors.html')
 def vendors_page():
-     vendors = Vendors.query.all()  
+     vendors = Vendor.query.all()  
      return render_template('vendors.html', vendors=vendors)
  
 @app.route('/products.html')
 def products_page():
-     products = Products.query.all()  
+     products = Product.query.all()  
      return render_template("products.html", products=products)
  
 @app.route('/product/<int:product_id>')
 def product_details(product_id):
-     product = Products.query.get(product_id)  
+     product = Product.query.get(product_id)  
      if product:
          return render_template("product_details.html", product=product)
      return "Product not found", 404
  
 @app.route('/vendor/<int:vendor_id>')
 def vendor_profile(vendor_id):
-     vendor = Vendors.query.get(vendor_id)
+     vendor = Vendor.query.get(vendor_id)
      if not vendor:
          abort(404) 
      return render_template("vendor_profile.html", vendor=vendor)
@@ -132,15 +225,19 @@ def about_page():
  
 @app.route('/api/check_username')
 def check_username():
-     username = request.args.get('username', '').strip()
- 
-     if not username:
-         return jsonify({'available': False, 'error': 'Username required'}), 400
- 
-     exists = db.session.query(Vendors.vendor_id).filter_by(username=username).first() is not None
- 
-     return jsonify({'available': not exists})
- 
+    username = request.args.get('username', '').strip()
+    role = request.args.get('role', '').strip()  # Get the selected role from the query params
+
+    if not username:
+        return jsonify({'available': False, 'error': 'Username required'}), 400
+
+    if not role:
+        return jsonify({'available': False, 'error': 'User role required'}), 400
+
+    # Check if a user with the same username and role already exists
+    exists = db.session.query(User.id).filter_by(username=username, role=role).first() is not None
+
+    return jsonify({'available': not exists})
 @app.route('/api/add_comment', methods=['POST'])
 def add_comment():
     try:
@@ -148,19 +245,23 @@ def add_comment():
         content = data.get('content')
         vendor_id = data.get('vendor_id')
 
-        # Check if content is provided
         if not content:
             return jsonify({'success': False, 'error': 'Comment content is required.'}), 400
 
-        # Ensure user is authenticated before allowing comment submission
-        if not current_user.is_authenticated:
-            return jsonify({'success': False, 'error': 'You must be logged in to comment.'}), 401
+        # Ensure user is authenticated
+        # if not current_user.is_authenticated:
+        #     return jsonify({'success': False, 'error': 'You must be logged in to comment.'}), 401
 
-        # Get the user id
         user_id = current_user.id
 
-        # Check if the vendor exists
-        vendor = Vendors.query.get(vendor_id)
+        is_vendor = Vendors.query.get(user_id)
+        is_client = Clients.query.get(user_id)
+
+        if not is_vendor and not is_client:
+            return jsonify({'success': False, 'error': 'Only registered vendors or clients can comment.'}), 403
+
+        # Check if the vendor being commented on exists
+        vendor = Vendor.query.get(vendor_id)
         if not vendor:
             return jsonify({'success': False, 'error': 'Vendor does not exist.'}), 400
 
@@ -169,7 +270,6 @@ def add_comment():
         db.session.add(new_comment)
         db.session.commit()
 
-        # Return the response with comment details
         return jsonify({
             'success': True,
             'content': content,
@@ -178,117 +278,73 @@ def add_comment():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+         print("Error occurred:", e) 
+         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/resetdb')
+def resetdb():
+    db.drop_all()
+    db.create_all()
+    return 'Database reset successfully'
+    
 
  
-@app.route('/api/register', methods=['POST', 'GET'])
-def register():
-     # if 'profile_picture' not in request.files:
-     #     return jsonify({"error": "Profile picture is required"}), 400
-     if request.method =='POST':
-         profile_picture = request.files['profile_picture']
-         first_name = request.form.get('first_name')
-         surname = request.form.get('surname')
-         username = request.form.get('register_username')
-         email = request.form.get('email')
-         phone_number = request.form.get('phone_number')
-         password = request.form.get('register_password')
-         description = request.form.getlist('description')
- 
-         # if not all([first_name, surname, username, email, phone_number, password, description]):
-         #     return jsonify({"error": "All fields are required!"}), 400
-         
-         # if Vendors.query.filter_by(vendor_email=email).first():
-         #     return jsonify({"error": "Email already registered"}), 400
-         
-         # if Vendors.query.filter_by(username=username).first():
-         #     return jsonify({"error": "Username already exists"}), 400
-         
-         files=[]
-         for pic in profile_picture:
-           files.append('inline', (pic.filename, pic.stream, pic.mimetype))  
-         
-         url = "https://api.mailgun.net/v3/sandbox731194d37470413e8c548a52a345d7c7.mailgun.org/messages"
-         data={
-             'from' : 'contactformservices@sandbox731194d37470413e8c548a52a345d7c7.mailgun.org',
-                 'to' : [email],
-                 'subject' : 'Successful Registration!',
-                 'text': f' Welcome {username}. ',
-                 'html' : f'''
-                         <html>
-                         <body>
-                         <h2> Hi {username}! Welcome to CamInspo Market Hub.</h2>
-                         <strong>Your Info</strong>
-                         <ul> Username - {username} </ul>
-                         <ul> Email Adress - {email} </ul>
-                         <ul> Phone Number - {phone_number} </ul>
- 
-                         <p> What are you waiting for? upload images to your product informtion on your account and access over 500000 customers! </p>
-                         </body>
-                         </html>
-                             '''
-             }
-         files = files
-         auth = ("api", "04e7193703a33f3123f6eb1cf196e9bb-24bda9c7-1550a8f8")
-         description = request.form.get('description')
- 
-         print([first_name, surname, username, email, phone_number, password, description])
- 
-         try:
-            if not all([first_name, surname, username, email, phone_number, password, description]):
-                 return jsonify({"error": "All fields are required!"}), 400
-             
-            if Vendors.query.filter_by(vendor_email=email).first():
-                 return jsonify({"error": "Email already registered"}), 400
-             
-            if Vendors.query.filter_by(username=username).first():
-                 return jsonify({"error": "Username already exists"}), 400
-             
- 
-            response = requests.post(url, auth=auth, data=data, files=files)
-            print('Response Status Code: ', response.status_code)
-            print(response.json())
-            flash(f'{username} registered with success!', 'success')
-                
-            profile_picture = request.files.get('profile_picture')
-                
-            image_filename = None
-            if profile_picture and profile_picture.filename != '':
-                 filename = secure_filename(profile_picture.filename)
-                 image_path = os.path.join(app.root_path, 'static', 'vendor_images', filename)
-                 profile_picture.save(image_path)
-                 image_filename = filename
-            else:
-                 profile_picture = None
-                             
-            hashed_password = generate_password_hash(password)
- 
-            new_vendor = Vendors(
-            first_name=first_name,
-            surname=surname,
+@app.route('/api/register', methods=['POST'])
+def api_register():
+
+    user_type = request.form.get('user_type')
+    first_name = request.form.get('first_name')
+    surname = request.form.get('surname')
+    username =request.form.get('register_username')
+    email = request.form.get('email')
+    phone_number = request.form.get('phone_number')
+    password = request.form.get('register_password')
+    profile_picture = request.files.get('profile_picture')
+
+    # Hash the password for security
+    hashed_password = generate_password_hash(password)
+
+    # Handle profile picture upload
+    if profile_picture:
+        if profile_picture and allowed_file(profile_picture.filename):
+            filename = secure_filename(profile_picture.filename)
+            profile_picture.save(os.path.join('static', 'vendor_images', filename))
+        else:
+            return jsonify({"message": "Invalid file type for profile picture!"}), 400
+    else:
+        filename = None  
+
+    if user_type == 'client':
+        new_user = User(
             username=username,
-            vendor_email=email,
+            email=email,
             phone_number=phone_number,
             password=hashed_password,
+            role='client'
+        )
+    elif user_type == 'vendor':
+        description = request.form.get('description')
+        new_user = User(
+            username=username,
+            email=email,
+            phone_number=phone_number,
+            password=hashed_password,
+            first_name=first_name,
+            surname=surname,
+            profile_picture=filename,
             description=description,
-            profile_pic= image_filename
-             )
- 
-            db.session.add(new_vendor)
-            db.session.commit()
-            img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
- 
-            print(f'{username} registered successfully')
-            return jsonify({"message": "Registration successful!", 
-                             "vendor_id": new_vendor.vendor_id,
-                             'img_url' : img_url
-                             }), 201
-         except Exception as e:
-             return jsonify({'error': str(e)}), 401
-             
-     
-     return render_template('base_template.html')
- 
+            role='vendor'
+        )
+    else:
+        return jsonify({"message": "Invalid user type!"}), 400
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"message": "Registration successful!"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error: {str(e)}"}), 500
  
   
 @app.route('/check_email')
@@ -340,78 +396,55 @@ def add_product():
              'product_name': product_name,
              'price': price,
              'img_url': img_url
-         })
+         }),200
  
      except Exception as e:
          print("Error adding product:", e)
          print(traceback.format_exc())  
  
          return jsonify({'success': False, 'error': str(e)}), 500
-     
-     
-@app.route('/api/register_client', methods=['POST'])
-def register_client():
-    if request.method == 'POST':
-        email = request.form.get('client_email')
-        number = request.form.get('client_number')
-        password = request.form.get('client_password')
-        Is_logged_in = False
-        
-        hashed_password = generate_password_hash(password)
-        print(email, number, password)
-        try:
-            if not all([email, number, hashed_password]):
-                return jsonify({'success': False, 'error': 'All fields are required'}), 400
-            if Clients.query.filter_by(client_email=email).first():
-                return jsonify({'success': False, 'error': 'Email Address already exists'}), 400
-            
-            registered_client = Clients(
-                client_email = email,
-                phone_number = number,
-                password = hashed_password
-                # reg_date = datetime()
-            )
-            db.session.add(registered_client)
-            db.session.commit()
-            Is_logged_in = True
-            return jsonify({
-            'Login Status' :Is_logged_in,
-            'email': email,
-            'phone_number': number,
-            'success' : True
-            }
                  
-            )
-        except Exception as e:
-            print('error registering new client', e)
-            print(traceback.format_exc())
-            return jsonify({'success': False, 'error': str(e)}), 500
-    return render_template('base_template.html')
-            
- 
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
-     username = request.form.get('login_username')
-     password = request.form.get('login_password')
- 
-     print(f"Form username: {username}")
-     print(f"Form password: {password}")
- 
-     user = Vendors.query.filter_by(username=username).first()
- 
-     if user and check_password_hash(user.password, password): 
-         session['vendor_id'] = user.vendor_id
-         session['username'] = user.username
-         return jsonify({
-             'message': 'Login successful',
-             'vendor_id': user.vendor_id
-         }), 200
-     else:
-         return jsonify({'error': 'Invalid username or password'}), 401
+    print("Raw form data received:", request.form)
+
+    username = request.form.get('login_username')
+    password = request.form.get('login_password')
+
+    print(f"Username from form: {username}")
+    print(f"Password from form: {password}")
+
+    user = User.query.filter(User.username.ilike(username.strip())).first()
+
+    if user:
+        print(f"User found: {user.username}")
+        print(f"Stored password hash: {user.password}")
+        
+        # Check if the password matches the hash
+        if check_password_hash(user.password, password):
+            login_user(user)
+            print(f"Stored hash: {user.password}")  # This prints the hashed password
+            print(f"Password match: True")
+            return jsonify({
+                "message": "Login successful",
+                "role": user.role,
+                "user_id": user.id,
+                "redirect_url": f"/me_page/{user.id}" if user.role == 'vendor' else "/products"
+            }), 200
+        else:
+            print("Password match: False")
+            return jsonify({"message": "Login failed"}), 401
+
+    print("Login failed: invalid username or password")
+    return jsonify({"message": "Login failed"}), 401
+
+     
 @app.route('/logout')
 def logout():
      session.clear()  
-     return redirect(url_for('vendors_page'))  
+     return redirect(url_for(''))  
     
 @app.route('/')
 def home():

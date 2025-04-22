@@ -3,15 +3,16 @@
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 <div class="container py-4">
     <div class="row">
         <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_pic) }}" class="img-fluid rounded-circle shadow" alt="Vendor Profile Picture">
-       
+            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_pic) }}"
+                class="img-fluid rounded-circle shadow" alt="Vendor Profile Picture">
+
         </div>
 
         <div class="col-md-8">
@@ -32,7 +33,8 @@ integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEw
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title fw-bold">{{ product.name }}</h5>
                             <p class="card-text"><strong>Price:</strong> {{ product.price }} XAF</p>
-                            <a href="{{ url_for('product_details', product_id=product.product_id) }}" class="btn btn-primary mt-auto">View Product</a>
+                            <a href="{{ url_for('product_details', product_id=product.product_id) }}"
+                                class="btn btn-primary mt-auto">View Product</a>
                         </div>
                     </div>
                 </div>
@@ -44,66 +46,82 @@ integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEw
                 </div>
 
                 <div class="d-flex mt-3">
-                    <textarea id="comment-input" class="form-control rounded-3" rows="3" placeholder="Write a message..." style="resize: none;"></textarea>
+                    <textarea id="comment-input" class="form-control rounded-3" rows="3"
+                        placeholder="Write a message..." style="resize: none;"></textarea>
                     <button id="send-comment" class="btn btn-success ms-2 align-self-end">
                         <i class="bi bi-send"></i> Send
                     </button>
+                    <!-- Hidden elements to store vendor_id and user_id -->
+                    <span id="vendor-id" data-id="{{ vendor.vendor_id }}" hidden></span>
+                    <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
+                        hidden></span>
+                    <span id="is-authenticated"
+                        data-id="{{ 'false' if not current_user.is_authenticated else 'true' }};"></span>
                 </div>
             </div>
         </div>
         <div id="message-box"></div>
     </div>
     <script>
-   document.addEventListener('DOMContentLoaded', function () {
-    const sendCommentButton = document.getElementById('send-comment');
-    const messageBox = document.getElementById('message-box');
-    const commentsContainer = document.getElementById('comments-box');
-    const commentInput = document.getElementById('comment-input');
+        document.addEventListener('DOMContentLoaded', function () {
+            const sendCommentButton = document.getElementById('send-comment');
+            const messageBox = document.getElementById('message-box');
+            const commentsContainer = document.getElementById('comments-box');
+            const commentInput = document.getElementById('comment-input');
+            const vendor_id = document.getElementById('vendor-id').dataset.id;
+            const user_id = document.getElementById('user-id').dataset.id;
+            const is_authenticated = document.getElementById('is-authenticated').dataset.id
 
-    sendCommentButton.addEventListener('click', function () {
-        const content = commentInput.value;
 
-        if (content === "") {
-            alert("Please write something before sending.");
-            return;
-        }
+            sendCommentButton.addEventListener('click', function () {
+                const content = commentInput.value;
 
-        fetch('/api/add_comment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrf_token]').value
-            },
-            body: JSON.stringify({
-                content: content,
-                vendor_id: vendor.vendor_id,
-                user_id: current_user.id
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-        
-                const newComment = document.createElement('div');
-                newComment.classList.add('comment-card', 'mt-3');
-                newComment.innerHTML = `<p><strong>${data.user_id}</strong> - ${data.created_at}</p>
+                if (content === "") {
+                    alert("Please write something before sending.");
+                    return;
+                }
+                if (!is_authenticated || user_id === null) {
+                    alert("You must be logged in to comment.");
+                    return;
+                }
+
+
+                fetch('/api/add_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        vendor_id: vendor_id,
+                        user_id: user_id
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+
+                            const newComment = document.createElement('div');
+                            newComment.classList.add('comment-card', 'mt-3');
+                            newComment.innerHTML = `<p><strong>${data.user_id}</strong> - ${data.created_at}</p>
                                         <p>${data.content}</p>`;
-                commentsContainer.appendChild(newComment);
-                commentInput.value = '';  
-            } else {
-                messageBox.classList.remove('d-none');
-                messageBox.classList.add('alert', 'alert-danger');
-                messageBox.textContent = data.error || "Error occurred while posting the comment.";
-            }
-        })
-        .catch(err => {
-            messageBox.classList.remove('d-none');
-            messageBox.classList.add('alert', 'alert-danger');
-            messageBox.textContent = "An unexpected error occurred.";
-            console.error("Error submitting comment:", err);
+                            commentsContainer.appendChild(newComment);
+                            commentInput.value = '';
+                        } else {
+                            messageBox.classList.remove('d-none');
+                            messageBox.classList.add('alert', 'alert-danger');
+                            messageBox.textContent = data.error || "Error occurred while posting the comment.";
+                        }
+                    })
+                    .catch(err => {
+                        messageBox.classList.remove('d-none');
+                        messageBox.classList.add('alert', 'alert-danger');
+                        messageBox.textContent = "An unexpected error occurred.";
+                        console.error("Error submitting comment:", err);
+                    });
+            });
         });
-    });
-});
 
 
     </script>
