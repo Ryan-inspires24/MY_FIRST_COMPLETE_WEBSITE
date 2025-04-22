@@ -6,8 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import json
 import requests
-from flask_login import LoginManager
-from flask_login import current_user, logout_user, login_required, LoginManager, login_user
+from flask_login import current_user, logout_user, login_required, LoginManager, login_user, UserMixin
 from datetime import timedelta
 from sqlalchemy.ext.hybrid import hybrid_property
 import traceback
@@ -32,7 +31,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
-    return Clients.query.get(int(user_id))
+    return User.query.get(int(user_id))
  
 db = SQLAlchemy(app)
  
@@ -87,7 +86,7 @@ class FavoriteVendor(db.Model):
     def __repr__(self):
         return f'<FavoriteVendor user={self.user_id} vendor={self.vendor_id}>'
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -97,6 +96,7 @@ class User(db.Model):
     phone_number = db.Column(db.String(20), nullable=False)
     reg_date = db.Column(db.DateTime, default=datetime.utcnow)
     role = db.Column(db.String(50))  # 'vendor' or 'client'
+    is_active_db = db.Column(db.Boolean, default=True)  # Add this field
 
     # For Vendors
     first_name = db.Column(db.String(50), nullable=True)
@@ -143,6 +143,21 @@ class User(db.Model):
     @property
     def is_client(self):
         return self.role == 'client'
+
+    @property
+    def is_active(self):
+        return self.is_active_db
+    
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
 
 
 class Product(db.Model):
@@ -416,17 +431,16 @@ def login():
     print(f"Username from form: {username}")
     print(f"Password from form: {password}")
 
+    if not username or not password:
+        return jsonify({"message": "Please provide both username and password."}), 400
+
     user = User.query.filter(User.username.ilike(username.strip())).first()
+    if user and not user.is_active:
+        return jsonify({"message": "Your account has been deactivated. Please contact support."}), 403
 
     if user:
-        print(f"User found: {user.username}")
-        print(f"Stored password hash: {user.password}")
-        
-        # Check if the password matches the hash
         if check_password_hash(user.password, password):
             login_user(user)
-            print(f"Stored hash: {user.password}")  # This prints the hashed password
-            print(f"Password match: True")
             return jsonify({
                 "message": "Login successful",
                 "role": user.role,

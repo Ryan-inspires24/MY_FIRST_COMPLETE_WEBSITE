@@ -82,7 +82,7 @@
                                     <div class="d-flex justify-content-between">
                                         <input type="submit" class="btn btn-primary" value="Login">
                                         <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
-                                            data-bs-target="#register_modal">
+                                            data-bs-target="#register_modal" id="login_btn">
 
                                     </diV>
 
@@ -229,7 +229,11 @@
                                 .then(data => {
                                     if (data.message === "Registration successful!") {
                                         alert('Registration successful! Redirecting...');
-                                        window.location.href = "/api/login";
+                                        let loginModal = new bootstrap.Modal(document.getElementById('login_modal'));
+                                        var myModal = new bootstrap.Modal(document.getElementById('register_modal'));
+                                        myModal.hide();  // This closes the modal
+
+                                        loginModal.show();
                                     } else {
                                         alert(data.message);
                                     }
