@@ -148,7 +148,6 @@ class User(db.Model, UserMixin):
     def is_active(self):
         return self.is_active_db
     
-    @property
     def is_authenticated(self):
         return True
 
@@ -202,7 +201,56 @@ def me_page(vendor_id):
     return render_template('me_page.html', vendor=vendor, products=products)
 
  
- 
+@app.route('/api/add_product_comment', methods=['POST'])
+def add_product_comment():
+    try:
+        print(f"Request Headers: {request.headers}")
+        data = request.get_json()
+        content = data.get('comment-input')
+        product_id = data.get('product_id')
+
+        if not content:
+            return jsonify({'success': False, 'error': 'Comment content is required.'}), 400
+
+        if not current_user.is_authenticated or not current_user.is_active_db:
+            return jsonify({'success': False, 'error': 'Only active users can comment.'}), 403
+
+        user = User.query.get(current_user.id)
+
+        product = Product.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'error': 'Vendor does not exist or is not valid.'}), 400
+
+        # Create new comment
+        new_comment = Comment(content=content, user_id=user.id, product_id=product.id)
+        db.session.add(new_comment)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'content': content,
+            'user_id': user.id,
+            'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': current_user.username 
+
+        })
+
+    except Exception as e:
+        print("Error occurred:", e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/api/product_comments')
+def product_comments(product_id):
+            comments = Comment.query.filter_by(product_id=product_id).order_by(Comment.created_at.desc()).all()
+            comment_list = [{
+                'content': comment.content,
+                'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'username': comment.user.username  # Assuming relationship is set up
+            } for comment in comments]
+
+            return jsonify(comment_list)
+        
+
 @app.route('/db_setup')
 def db_setup():
          db.create_all() 
@@ -211,8 +259,8 @@ def db_setup():
  
 @app.route('/vendors.html')
 def vendors_page():
-     vendors = Vendor.query.all()  
-     return render_template('vendors.html', vendors=vendors)
+    vendors = User.query.filter_by(role='vendor').all()
+    return render_template('vendors.html', vendors=vendors)
  
 @app.route('/products.html')
 def products_page():
@@ -228,7 +276,7 @@ def product_details(product_id):
  
 @app.route('/vendor/<int:vendor_id>')
 def vendor_profile(vendor_id):
-     vendor = Vendor.query.get(vendor_id)
+     vendor = User.query.get(vendor_id)
      if not vendor:
          abort(404) 
      return render_template("vendor_profile.html", vendor=vendor)
@@ -249,7 +297,6 @@ def check_username():
     if not role:
         return jsonify({'available': False, 'error': 'User role required'}), 400
 
-    # Check if a user with the same username and role already exists
     exists = db.session.query(User.id).filter_by(username=username, role=role).first() is not None
 
     return jsonify({'available': not exists})
@@ -263,38 +310,44 @@ def add_comment():
         if not content:
             return jsonify({'success': False, 'error': 'Comment content is required.'}), 400
 
-        # Ensure user is authenticated
-        # if not current_user.is_authenticated:
-        #     return jsonify({'success': False, 'error': 'You must be logged in to comment.'}), 401
+        if not current_user.is_authenticated or not current_user.is_active_db:
+            return jsonify({'success': False, 'error': 'Only active users can comment.'}), 403
 
-        user_id = current_user.id
+        user = User.query.get(current_user.id)
 
-        is_vendor = Vendors.query.get(user_id)
-        is_client = Clients.query.get(user_id)
-
-        if not is_vendor and not is_client:
-            return jsonify({'success': False, 'error': 'Only registered vendors or clients can comment.'}), 403
-
-        # Check if the vendor being commented on exists
-        vendor = Vendor.query.get(vendor_id)
-        if not vendor:
-            return jsonify({'success': False, 'error': 'Vendor does not exist.'}), 400
+        # Check if the vendor being commented on exists and has role 'vendor'
+        vendor = User.query.get(vendor_id)
+        if not vendor or vendor.role != 'vendor':
+            return jsonify({'success': False, 'error': 'Vendor does not exist or is not valid.'}), 400
 
         # Create new comment
-        new_comment = Comment(content=content, user_id=user_id, vendor_id=vendor_id)
+        new_comment = Comment(content=content, user_id=user.id, vendor_id=vendor.id)
         db.session.add(new_comment)
         db.session.commit()
 
         return jsonify({
             'success': True,
             'content': content,
-            'user_id': user_id,
-            'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            'user_id': user.id,
+            'created_at': new_comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'username': current_user.username 
+
         })
 
     except Exception as e:
-         print("Error occurred:", e) 
-         return jsonify({'success': False, 'error': str(e)}), 500
+        print("Error occurred:", e)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/comments/<int:vendor_id>')
+def get_comments(vendor_id):
+    comments = Comment.query.filter_by(vendor_id=vendor_id).order_by(Comment.created_at.desc()).all()
+    comment_list = [{
+        'content': comment.content,
+        'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'username': comment.user.username  # Assuming relationship is set up
+    } for comment in comments]
+
+    return jsonify(comment_list)
 
 @app.route('/resetdb')
 def resetdb():
@@ -370,55 +423,53 @@ def check_email():
  
 @app.route('/add_product', methods=['POST'])
 def add_product():
-     try:
-         product_name = request.form['product_name']
-         description = request.form['description']
-         price = float(request.form['price'])
-         vendor_id = int(request.form['vendor_id'])
-         category_id = int(request.form['category']) 
- 
- 
-         product_pic = request.files.get('product_pic')
-         image_filename = None
- 
-         if product_pic and product_pic.filename != '':
-             filename = secure_filename(product_pic.filename)
-             
-             image_path = os.path.join(app.root_path, 'static', 'product_images', filename)
-             product_pic.save(image_path)
-             
-             image_filename = filename
- 
-         new_product = Products(
-             product_name=product_name,
-             description=description,
-             price=price,
-             vendor_id=vendor_id,
-             product_pic=image_filename,
-             category_id = category_id
-         )
- 
-         db.session.add(new_product)
-         db.session.commit()
- 
-         img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
-         print("Product Name:", product_name)
-         print("Price:", price)
-         print("Image Filename:", image_filename)
- 
-         return jsonify({
-             'success': True,
-             'product_name': product_name,
-             'price': price,
-             'img_url': img_url
-         }),200
- 
-     except Exception as e:
-         print("Error adding product:", e)
-         print(traceback.format_exc())  
- 
-         return jsonify({'success': False, 'error': str(e)}), 500
-                 
+    try:
+        product_name = request.form['product_name']
+        description = request.form['description']
+        price = float(request.form['price'])
+        vendor_id = int(request.form['vendor_id'])
+        category_id = int(request.form['category']) 
+        stock = int(request.form['stock'])  # ✅ Stock should be an int
+
+        product_pic = request.files.get('product_pic')
+        image_filename = None
+
+        if product_pic and product_pic.filename != '':
+            filename = secure_filename(product_pic.filename)
+            image_path = os.path.join(app.root_path, 'static', 'product_images', filename)
+            product_pic.save(image_path)
+            image_filename = filename
+
+        new_product = Product(
+            product_name=product_name,
+            description=description,
+            price=price,
+            vendor_id=vendor_id,
+            product_pic=image_filename,
+            stock=stock,
+            category_id=category_id
+        )
+
+        db.session.add(new_product)
+        db.session.commit()
+
+        img_url = url_for('static', filename='product_images/' + image_filename) if image_filename else ''
+        print("Product Name:", product_name)
+        print("Price:", price)
+        print("Image Filename:", image_filename)
+
+        return jsonify({
+            'success': True,
+            'product_name': product_name,
+            'price': price,
+            'img_url': img_url
+        }), 200
+
+    except Exception as e:
+        print("Error adding product:", e)
+        print(traceback.format_exc())  
+
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/login', methods=['POST'])

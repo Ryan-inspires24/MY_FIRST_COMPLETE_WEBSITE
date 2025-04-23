@@ -3,36 +3,151 @@
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 <div class="container py-4">
     <div class="row">
         <div class="col-md-6">
-            <img src="{{ product.image }}" class="img-fluid rounded shadow" alt="{{ product.name }}">
+            <img src="{{ url_for('static', filename='product_images/'+ product.product_pic) }}"
+                class="img-fluid rounded shadow" alt="{{ product.name }}">
         </div>
         <div class="col-md-6">
-            <h2 class="fw-bold">{{ product.name }}</h2>
-            <p class="text-muted">{{ product.category }}</p>
+            <h2 class="fw-bold">{{ product.product_name }}</h2>
             <h4 class="text-success fw-bold">{{ product.price }} XAF</h4>
-
+            <h4 class="fw-bold">{{product.category.name}}</h4>
             <p><strong>Description:</strong> {{ product.description }}</p>
-            <p><strong>Stock Available:</strong> 
-                {% if product.stock > 0 %}
-                    <span class="text-success">{{ product.stock }} items left</span>
-                {% else %}
-                    <span class="text-danger">Out of stock</span>
-                {% endif %}
-            </p>
 
+            {% if product.vendor%}
             <div class="d-flex align-items-center">
-                <img src="{{ product.vendor.profile_pic }}" class="rounded-circle me-2" width="50" height="50">
-                <p class="mb-0"><strong>Sold by:</strong> {{ product.vendor.name }}</p>
+                <img src="{{ url_for('static', filename='vendor_images/' + product.vendor.profile_picture) }}"
+                    class="rounded-circle me-2" width="100" height="100">
+                <p class="mb-0"><strong>Sold by:</strong> {{ product.vendor.username }}</p>
             </div>
-
+            {% endif %}
             <a href="/order/{{ product.id }}" class="btn btn-primary mt-3">Order Now</a>
+            <div id="product-id" data-id="{{ product.id }}"></div>
+
         </div>
     </div>
+    <div class="mt-5">
+        <h4 class="fw-bold">Comments</h4>
+        <div id="comments-box" class="border p-3 rounded-3" style="height: 300px; overflow-y: auto;"></div>
+
+        <div class="d-flex mt-3">
+            <textarea id="comment-input" name="comment-input" class="form-control rounded-3" rows="3" placeholder="Write a message..."
+                style="resize: none;"></textarea>
+            <button type="button" id="send-comment" class="btn btn-success ms-2 align-self-end">
+                <i class="bi bi-send"></i> Send
+            </button>
+            <span id="product-id" data-id="{{ product.id }}" hidden></span>
+            <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
+                hidden></span>
+            <span id="is-authenticated" data-id="{{ 'false' if not current_user.is_authenticated else 'true' }}"></span>
+        </div>
+    </div>
+    <div id="message-box"></div>
+
+    <script>
+        console.log("JS script is running");
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const sendCommentButton = document.getElementById('send-comment');
+            const messageBox = document.getElementById('message-box');
+            const commentsContainer = document.getElementById('comments-box');
+            const commentInput = document.getElementById('comment-input');
+            const product_id = document.getElementById('product-id')?.dataset.id;
+            const user_id = document.getElementById('user-id')?.dataset.id;
+            const is_authenticated = document.getElementById('is-authenticated')?.dataset.id;
+            console.log('DOM fully loaded')
+            console.log(sendCommentButton)
+
+            if (!product_id || !commentsContainer || !sendCommentButton || !commentInput) return;
+
+            if (is_authenticated !== "true" || !user_id || user_id === "null") {
+                alert("You must be logged in to comment.");
+                return;
+
+                // Load existing comments on page load
+                fetch(`/api/product_comments/${product_id}`)
+                    .then(response => response.json())
+                    .then(comments => {
+                        comments.forEach(comment => {
+                            const commentDiv = document.createElement('div');
+                            commentDiv.classList.add('comment-card', 'mt-3');
+                            commentDiv.innerHTML = `
+                            <p><strong>${comment.username}</strong> - ${comment.created_at}</p>
+                            <p>${comment.content}</p>`;
+                            commentsContainer.appendChild(commentDiv);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error loading comments:", error);
+                        if (messageBox) {
+                            messageBox.classList.remove('d-none');
+                            messageBox.classList.add('alert', 'alert-warning');
+                            messageBox.textContent = "Failed to load comments.";
+                        }
+                    });
+
+
+                if (sendCommentButton) {
+                    console.log('Adding event click')
+                    sendCommentButton.addEventListener('click', function () {
+                        console.log("Send button clicked");
+                        const content = commentInput.value.trim();
+
+                        if (!content) {
+                            return alert("Please write something before sending.");
+                        }
+
+                        if (!is_authenticated || user_id === "null") {
+                            return alert("You must be logged in to comment.");
+                        }
+
+                        fetch('/api/add_product_comment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content, product_id })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const newComment = document.createElement('div');
+                                    newComment.classList.add('comment-card', 'mt-3');
+                                    newComment.innerHTML = `
+                            <p><strong>${data.username}</strong> - ${data.created_at}</p>
+                            <p>${data.content}</p>`;
+                                    commentsContainer.appendChild(newComment);
+                                    commentInput.value = '';
+                                    // Optionally scroll to the new comment
+                                    commentsContainer.scrollTop = commentsContainer.scrollHeight;
+                                } else {
+                                    displayMessage(data.error || "Error posting comment.", 'danger');
+                                }
+                            })
+                            .catch(err => {
+                                console.error("Error submitting comment:", err);
+                                displayMessage("An unexpected error occurred.", 'danger');
+                            });
+                    });
+
+                }
+                else {
+                    console.log('Button Not Found')
+                }
+
+                function displayMessage(message, type) {
+                    if (messageBox) {
+                        messageBox.className = `alert alert-${type} mt-3`;
+                        messageBox.textContent = message;
+                        messageBox.classList.remove('d-none');
+                    }
+                }
+                    }
+                });
+    </script>
+
 </div>
 {% endblock %}

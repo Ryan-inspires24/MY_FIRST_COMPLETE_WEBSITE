@@ -9,7 +9,7 @@
 <div class="container my-5">
     <div class="text-center mb-4">
         <h2>Welcome, {{ vendor.first_name }} {{ vendor.surname }}</h2>
-        <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_pic) }}" alt="Profile Picture"
+        <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_picture) }}" alt="Profile Picture"
             class="rounded-circle w-75 h-75" style="width: 150px; height: 150px; object-fit: cover;">
     </div>
 
@@ -50,13 +50,18 @@
                 <label class="form-label" for="price">Price (XAF)</label>
                 <input type="number" name="price" class="form-control" required>
             </div>
+            <div class="mb-3">
+              <label class="form-label" for="price">Number available in stock</label>
+              <input type="number" name="stock" class="form-control" required>
+          </div>
+
 
             <div class="mb-3">
                 <label class="form-label" for="product_pic">Product Image</label>
                 <input type="file" name="product_pic" class="form-control">
             </div>
 
-            <input type="hidden" name="vendor_id" value="{{ vendor.vendor_id }}">
+            <input type="hidden" name="vendor_id" value="{{ vendor.id }}">
 
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>

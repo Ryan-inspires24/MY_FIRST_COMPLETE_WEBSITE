@@ -10,7 +10,7 @@
 <div class="container py-4">
     <div class="row">
         <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_pic) }}"
+            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_picture) }}"
                 class="img-fluid rounded-circle shadow" alt="Vendor Profile Picture">
 
         </div>
@@ -20,7 +20,7 @@
             <p>{{ vendor.description }}</p>
 
             <h4 class="fw-bold mt-4">Contact Details</h4>
-            <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}">{{ vendor.vendor_email }}</a></p>
+            <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a></p>
             <p><strong>Phone:</strong> {{ vendor.phone_number }}</p>
             <p><strong>Location:</strong> {{ vendor.location }}</p>
 
@@ -52,7 +52,7 @@
                         <i class="bi bi-send"></i> Send
                     </button>
                     <!-- Hidden elements to store vendor_id and user_id -->
-                    <span id="vendor-id" data-id="{{ vendor.vendor_id }}" hidden></span>
+                    <span id="vendor-id" data-id="{{ vendor.id }}" hidden></span>
                     <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
                         hidden></span>
                     <span id="is-authenticated"
@@ -71,6 +71,18 @@
             const vendor_id = document.getElementById('vendor-id').dataset.id;
             const user_id = document.getElementById('user-id').dataset.id;
             const is_authenticated = document.getElementById('is-authenticated').dataset.id
+
+            fetch(`/api/comments/${vendor_id}`)
+                .then(response => response.json())
+                .then(comments => {
+                    comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.classList.add('comment-card', 'mt-3');
+                        commentDiv.innerHTML = `<p><strong>${comment.username}</strong> - ${comment.created_at}</p>
+                                    <p>${comment.content}</p>`;
+                        commentsContainer.appendChild(commentDiv);
+                    });
+                });
 
 
             sendCommentButton.addEventListener('click', function () {
@@ -94,8 +106,7 @@
                     },
                     body: JSON.stringify({
                         content: content,
-                        vendor_id: vendor_id,
-                        user_id: user_id
+                        vendor_id: vendor_id
                     })
                 })
                     .then(response => response.json())
@@ -104,7 +115,7 @@
 
                             const newComment = document.createElement('div');
                             newComment.classList.add('comment-card', 'mt-3');
-                            newComment.innerHTML = `<p><strong>${data.user_id}</strong> - ${data.created_at}</p>
+                            newComment.innerHTML = `<p><strong>${data.username}</strong> - ${data.created_at}</p>
                                         <p>${data.content}</p>`;
                             commentsContainer.appendChild(newComment);
                             commentInput.value = '';
@@ -120,6 +131,7 @@
                         messageBox.textContent = "An unexpected error occurred.";
                         console.error("Error submitting comment:", err);
                     });
+
             });
         });
 
