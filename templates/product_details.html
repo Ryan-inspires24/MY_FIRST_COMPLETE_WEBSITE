@@ -27,126 +27,108 @@
             </div>
             {% endif %}
             <a href="/order/{{ product.id }}" class="btn btn-primary mt-3">Order Now</a>
-            <div id="product-id" data-id="{{ product.id }}"></div>
 
         </div>
     </div>
     <div class="mt-5">
         <h4 class="fw-bold">Comments</h4>
-        <div id="comments-box" class="border p-3 rounded-3" style="height: 300px; overflow-y: auto;"></div>
+        <div id="product-comments-box" class="border p-3 rounded-3" style="height: 300px; overflow-y: auto;"></div>
 
         <div class="d-flex mt-3">
-            <textarea id="comment-input" name="comment-input" class="form-control rounded-3" rows="3" placeholder="Write a message..."
-                style="resize: none;"></textarea>
-            <button type="button" id="send-comment" class="btn btn-success ms-2 align-self-end">
+            <textarea id="product-comment-input" name="product-comment-input" class="form-control rounded-3" rows="3"
+                placeholder="Write a message..." style="resize: none;"></textarea>
+            <button type="button" id="send-product-comment" class="btn btn-success ms-2 align-self-end">
                 <i class="bi bi-send"></i> Send
             </button>
-            <span id="product-id" data-id="{{ product.id }}" hidden></span>
+            <span id="product-id" data-id="{{ product.product_id }}" hidden></span>
             <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
                 hidden></span>
             <span id="is-authenticated" data-id="{{ 'false' if not current_user.is_authenticated else 'true' }}"></span>
         </div>
     </div>
-    <div id="message-box"></div>
+    <div id="product-message-box"></div>
 
     <script>
-        console.log("JS script is running");
-
         document.addEventListener('DOMContentLoaded', function () {
-            const sendCommentButton = document.getElementById('send-comment');
-            const messageBox = document.getElementById('message-box');
-            const commentsContainer = document.getElementById('comments-box');
-            const commentInput = document.getElementById('comment-input');
-            const product_id = document.getElementById('product-id')?.dataset.id;
-            const user_id = document.getElementById('user-id')?.dataset.id;
-            const is_authenticated = document.getElementById('is-authenticated')?.dataset.id;
-            console.log('DOM fully loaded')
-            console.log(sendCommentButton)
+            const sendCommentButton = document.getElementById('send-product-comment');
+            const messageBox = document.getElementById('product-message-box');
+            const commentsContainer = document.getElementById('product-comments-box');
+            const commentInput = document.getElementById('product-comment-input');
 
-            if (!product_id || !commentsContainer || !sendCommentButton || !commentInput) return;
+            const product_id = document.getElementById('product-id').dataset.id;
+            console.log(product_id)
+            const user_id = document.getElementById('user-id').dataset.id;
+            const is_authenticated = document.getElementById('is-authenticated').dataset.id;
 
-            if (is_authenticated !== "true" || !user_id || user_id === "null") {
-                alert("You must be logged in to comment.");
-                return;
-
-                // Load existing comments on page load
-                fetch(`/api/product_comments/${product_id}`)
-                    .then(response => response.json())
-                    .then(comments => {
-                        comments.forEach(comment => {
-                            const commentDiv = document.createElement('div');
-                            commentDiv.classList.add('comment-card', 'mt-3');
-                            commentDiv.innerHTML = `
-                            <p><strong>${comment.username}</strong> - ${comment.created_at}</p>
-                            <p>${comment.content}</p>`;
-                            commentsContainer.appendChild(commentDiv);
-                        });
-                    })
-                    .catch(error => {
-                        console.error("Error loading comments:", error);
-                        if (messageBox) {
-                            messageBox.classList.remove('d-none');
-                            messageBox.classList.add('alert', 'alert-warning');
-                            messageBox.textContent = "Failed to load comments.";
-                        }
-                    });
-
-
-                if (sendCommentButton) {
-                    console.log('Adding event click')
-                    sendCommentButton.addEventListener('click', function () {
-                        console.log("Send button clicked");
-                        const content = commentInput.value.trim();
-
-                        if (!content) {
-                            return alert("Please write something before sending.");
-                        }
-
-                        if (!is_authenticated || user_id === "null") {
-                            return alert("You must be logged in to comment.");
-                        }
-
-                        fetch('/api/add_product_comment', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content, product_id })
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    const newComment = document.createElement('div');
-                                    newComment.classList.add('comment-card', 'mt-3');
-                                    newComment.innerHTML = `
-                            <p><strong>${data.username}</strong> - ${data.created_at}</p>
-                            <p>${data.content}</p>`;
-                                    commentsContainer.appendChild(newComment);
-                                    commentInput.value = '';
-                                    // Optionally scroll to the new comment
-                                    commentsContainer.scrollTop = commentsContainer.scrollHeight;
-                                } else {
-                                    displayMessage(data.error || "Error posting comment.", 'danger');
-                                }
-                            })
-                            .catch(err => {
-                                console.error("Error submitting comment:", err);
-                                displayMessage("An unexpected error occurred.", 'danger');
-                            });
-                    });
-
-                }
-                else {
-                    console.log('Button Not Found')
-                }
-
-                function displayMessage(message, type) {
-                    if (messageBox) {
-                        messageBox.className = `alert alert-${type} mt-3`;
-                        messageBox.textContent = message;
-                        messageBox.classList.remove('d-none');
+            // Fetch and display existing comments
+            fetch(`/api/product_comments/${product_id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to load comments: ${response.status}`);
                     }
-                }
-                    }
+                    return response.json();
+                })
+                .then(comments => {
+                    comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        commentDiv.classList.add('comment-card', 'mt-3');
+                        commentDiv.innerHTML = `<p><strong>${comment.username}</strong> - ${comment.created_at}</p>
+                                                <p>${comment.content}</p>`;
+                        commentsContainer.appendChild(commentDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading comments:", error);
                 });
+
+            // Handle new comment submission
+            sendCommentButton.addEventListener('click', function () {
+                const content = commentInput.value.trim();
+
+                if (content === "") {
+                    alert("Please write something before sending.");
+                    return;
+                }
+
+                if (!is_authenticated || user_id === null) {
+                    alert("You must be logged in to comment.");
+                    return;
+                }
+
+                fetch('/api/add_product_comment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        product_id: product_id
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const newComment = document.createElement('div');
+                            newComment.classList.add('comment-card', 'mt-3');
+                            newComment.innerHTML = `<p><strong>${data.username}</strong> - ${data.created_at}</p>
+                                                    <p>${data.content}</p>`;
+                            commentsContainer.appendChild(newComment);
+                            commentInput.value = '';
+                            messageBox.classList.add('d-none');
+                        } else {
+                            messageBox.classList.remove('d-none');
+                            messageBox.classList.add('alert', 'alert-danger');
+                            messageBox.textContent = data.error || "Error occurred while posting the comment.";
+                        }
+                    })
+                    .catch(err => {
+                        messageBox.classList.remove('d-none');
+                        messageBox.classList.add('alert', 'alert-danger');
+                        messageBox.textContent = "An unexpected error occurred.";
+                        console.error("Error submitting comment:", err);
+                    });
+            });
+        });
     </script>
 
 </div>

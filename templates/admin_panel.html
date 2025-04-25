@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-5">
+        <h2 class="mb-5 text-center text-primary">Admin Dashboard</h2>
+
+        <!-- Vendors Table -->
+        <div class="mb-5">
+            <h4 class="text-primary">Vendors</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vendor in vendors %}
+                    <tr>
+                        <td>{{ vendor.username }}</td>
+                        <td>{{ vendor.email }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('block_user', user_id=vendor.id) }}">
+                                <button type="submit" class="btn btn-warning">Block User</button>
+                            </form>
+                            <a href="{{ url_for('delete_user', user_id=vendor.id) }}"
+                                class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Clients Table -->
+        <div class="mb-5">
+            <h4 class="text-success">Clients</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="table-success">
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>{{ client.username }}</td>
+                        <td>{{ client.email }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('block_user', user_id=client.id) }}">
+                                <button type="submit" class="btn btn-warning">Block User</button>
+                            </form>
+                            <a href="{{ url_for('delete_user', user_id=client.id) }}"
+                                class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Vendor Comments Table -->
+        <div class="mb-5">
+            <h4 class="text-info">Vendor Comments</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="table-info">
+                    <tr>
+                        <th>User</th>
+                        <th>Vendor</th>
+                        <th>Comment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comment in vendor_comments %}
+                    <tr>
+                        <td>{{ comment.user.username }}</td>
+                        <td>{{ comment.vendor.username }}</td>
+                        <td>{{ comment.content }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}">
+                                <button type="submit" class="btn btn-danger">Delete Comment</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Product Comments Table -->
+        <div class="mb-5">
+            <h4 class="text-secondary">Product Comments</h4>
+            <table class="table table-bordered table-striped">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>User</th>
+                        <th>Product</th>
+                        <th>Comment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comment in product_comments %}
+                    <tr>
+                        <td>{{ comment.user.username }}</td>
+                        <td>{{ comment.product.product_name }}</td>
+                        <td>{{ comment.content }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}">
+                                <button type="submit" class="btn btn-danger">Delete Comment</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

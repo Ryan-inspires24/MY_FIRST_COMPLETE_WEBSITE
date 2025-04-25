@@ -29,12 +29,13 @@
                 {% for product in vendor.products %}
                 <div class="col-md-6 col-lg-4">
                     <div class="card shadow-sm border-1 h-100">
-                        <img src="{{ product.image }}" class="card-img-top img-fluid rounded">
+                        <img src="{{ url_for('static', filename='product_images/'+ product.product_pic) }}" class="card-img-top img-fluid rounded">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title fw-bold">{{ product.name }}</h5>
                             <p class="card-text"><strong>Price:</strong> {{ product.price }} XAF</p>
                             <a href="{{ url_for('product_details', product_id=product.product_id) }}"
                                 class="btn btn-primary mt-auto">View Product</a>
+                                
                         </div>
                     </div>
                 </div>

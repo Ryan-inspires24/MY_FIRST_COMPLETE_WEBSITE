@@ -25,14 +25,15 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
 app.secret_key = 'Gxo/24#9' 
 login_manager = LoginManager()
 login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
- 
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://ryan_inspires:Asherinyuy24@localhost/caminspo_db'
+
 db = SQLAlchemy(app)
  
 # Product Categories
@@ -85,6 +86,7 @@ class FavoriteVendor(db.Model):
 
     def __repr__(self):
         return f'<FavoriteVendor user={self.user_id} vendor={self.vendor_id}>'
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -204,10 +206,13 @@ def me_page(vendor_id):
 @app.route('/api/add_product_comment', methods=['POST'])
 def add_product_comment():
     try:
-        print(f"Request Headers: {request.headers}")
         data = request.get_json()
-        content = data.get('comment-input')
+        content = data.get('content')
         product_id = data.get('product_id')
+        print("Received JSON:", data)
+        print("Parsed content:", content)
+        print("Parsed product_id:", product_id)
+
 
         if not content:
             return jsonify({'success': False, 'error': 'Comment content is required.'}), 400
@@ -219,10 +224,11 @@ def add_product_comment():
 
         product = Product.query.get(product_id)
         if not product:
-            return jsonify({'success': False, 'error': 'Vendor does not exist or is not valid.'}), 400
+            return jsonify({'success': False, 'error': 'Product does not exist or is not valid.'}), 400
+        print(product_id)
 
         # Create new comment
-        new_comment = Comment(content=content, user_id=user.id, product_id=product.id)
+        new_comment = Comment(content=content, user_id=user.id, product_id=product.product_id)
         db.session.add(new_comment)
         db.session.commit()
 
@@ -239,7 +245,7 @@ def add_product_comment():
         print("Error occurred:", e)
         return jsonify({'success': False, 'error': str(e)}), 500
     
-@app.route('/api/product_comments')
+@app.route('/api/product_comments/<int:product_id>')
 def product_comments(product_id):
             comments = Comment.query.filter_by(product_id=product_id).order_by(Comment.created_at.desc()).all()
             comment_list = [{
@@ -355,8 +361,57 @@ def resetdb():
     db.create_all()
     return 'Database reset successfully'
     
+@app.route('/admin_panel.html')
+@login_required
+def admin_panel():
+    if current_user.role != 'admin':
+        return "Access Denied", 403  # or redirect to home
 
- 
+    # You'll fetch and pass data to your admin panel template here:
+    vendors = User.query.filter_by(role='vendor').all()
+    clients = User.query.filter_by(role='client').all()
+    vendor_comments = Comment.query.filter(Comment.vendor_id.isnot(None)).all()
+    product_comments = Comment.query.filter(Comment.product_id.isnot(None)).all()
+
+    return render_template('admin_panel.html',
+                           vendors=vendors,
+                           clients=clients,
+                           vendor_comments=vendor_comments,
+                           product_comments=product_comments)
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        return "Access Denied", 403
+    
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for('admin_panel'))
+
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    if current_user.role != 'admin':
+        return "Access Denied", 403
+    
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for('admin_panel'))
+
+@app.route('/block_user/<int:user_id>', methods=['POST'])
+@login_required
+def block_user(user_id):
+    if current_user.role != 'admin':
+        return "Access Denied", 403
+    
+    user = User.query.get_or_404(user_id)
+    user.is_active_db = False  # Deactivating the user
+    db.session.commit()
+    return redirect(url_for('admin_panel'))
+
 @app.route('/api/register', methods=['POST'])
 def api_register():
 
@@ -429,7 +484,7 @@ def add_product():
         price = float(request.form['price'])
         vendor_id = int(request.form['vendor_id'])
         category_id = int(request.form['category']) 
-        stock = int(request.form['stock'])  # ✅ Stock should be an int
+        stock = int(request.form['stock'])  
 
         product_pic = request.files.get('product_pic')
         image_filename = None
@@ -546,7 +601,7 @@ def home():
          }
      ]
  
-     return render_template('index.html', premium_listings=premium_listings)
+     return render_template('index.html', premium_listings=premium_listings, user=current_user)
  
  
 categories_data = {
