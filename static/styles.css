@@ -52,3 +52,122 @@ textarea.is-invalid + .invalid-feedback {
 .vendor-field {
         display: none;
  }
+
+/* Hero Section Background and Padding */
+.hero-section {
+    background: linear-gradient(to right, #fdf6f9, #fdeef1);
+    padding: 80px 20px;
+    border-bottom: 5px solid #BE5985;
+}
+
+/* Left text column */
+.hero-text {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(61, 3, 1, 0.1);
+    font-family: 'Poppins', sans-serif;
+    color: #3D0301;
+}
+
+/* Heading */
+#heroHeading {
+    font-size: 3.5rem;
+    color: #BE5985;
+    text-align: left;
+}
+
+/* Paragraphs */
+.hero-text .lead,
+.hero-text .fs-4 {
+    color: #5a2c38;
+    text-align: left;
+}
+
+/* Button */
+#get_started_btn {
+    background-color: #BE5985;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+#get_started_btn:hover {
+    background-color: #B03052;
+}
+
+/* Quote box */
+.hero-text figure {
+    background-color: #FFF5F7;
+    color: #5a2c38;
+    border-left: 6px solid #D76C82;
+    font-style: italic;
+}
+
+/* Right image column */
+#heroImage img {
+    max-width: 100%;
+    border-radius: 20px;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+    animation: fadeInRight 1.2s ease;
+}
+
+/* Fade in animation */
+@keyframes fadeInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-text {
+    animation: fadeInUp 2s ease-out;
+}
+
+#premiumSection h2,
+#premiumSection p {
+  font-family: 'Poppins', sans-serif;
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(61, 3, 1, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: fadeInUp 2s ease-out;
+}
+.card h4 {
+  font-weight: bold;
+}
+
+.card ul li {
+  padding: 5px 0;
+}
+
+.btn-warning {
+  font-weight: bold;
+  border-radius: 10px;
+}
+.btn-warning:hover {
+  background-color: #B03052;
+  color: #fff;
+}

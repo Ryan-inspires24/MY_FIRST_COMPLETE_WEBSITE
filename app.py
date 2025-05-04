@@ -12,7 +12,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 import traceback
 import os
  
-app = Flask(__name__)
+ 
+app = Flask(__name__, static_folder='static')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
@@ -171,6 +172,8 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('product_categories.category_id'), nullable=False)
     vendor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  
+    stock = db.Column(db.Integer)  
+
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -199,8 +202,15 @@ def me_page(vendor_id):
         return f'unauthorized' 
 
     vendor = User.query.filter_by(id=vendor_id, role='vendor').first_or_404()
+    user= User.query.all()
     products = Product.query.filter_by(vendor_id=vendor_id).all()
-    return render_template('me_page.html', vendor=vendor, products=products)
+    return render_template(
+        'me_page.html',
+        vendor=vendor,
+        products=products,
+        vendor_id=current_user.id,
+        user=user
+    )
 
  
 @app.route('/api/add_product_comment', methods=['POST'])
@@ -265,31 +275,38 @@ def db_setup():
  
 @app.route('/vendors.html')
 def vendors_page():
+    user = User.query.all()  
     vendors = User.query.filter_by(role='vendor').all()
-    return render_template('vendors.html', vendors=vendors)
+    return render_template('vendors.html', vendors=vendors, user=user)
  
-@app.route('/products.html')
+@app.route('/products')
 def products_page():
-     products = Product.query.all()  
-     return render_template("products.html", products=products)
+     products = Product.query.all()
+     user = User.query.all()  
+     return render_template("products.html", products=products, user=user)
  
 @app.route('/product/<int:product_id>')
 def product_details(product_id):
      product = Product.query.get(product_id)  
+     user = User.query.all()  
      if product:
-         return render_template("product_details.html", product=product)
+         return render_template("product_details.html", product=product, user=user)
      return "Product not found", 404
  
 @app.route('/vendor/<int:vendor_id>')
 def vendor_profile(vendor_id):
-     vendor = User.query.get(vendor_id)
-     if not vendor:
-         abort(404) 
-     return render_template("vendor_profile.html", vendor=vendor)
+    vendor = User.query.get(vendor_id)
+    user = User.query.all()  
+
+    if not vendor:
+        abort(404) 
+        
+    return render_template("vendor_profile.html", vendor=vendor, user=user)
  
 @app.route('/about.html')
 def about_page():
-     return render_template('about.html')
+    user = User.query.all()  
+    return render_template('about.html', user=user)
  
  
 @app.route('/api/check_username')
@@ -388,7 +405,10 @@ def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
-    return redirect(url_for('admin_panel'))
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True}), 200
+    else:
+        return redirect(url_for('admin_panel')) 
 
 @app.route('/delete_comment/<int:comment_id>', methods=['POST'])
 @login_required
@@ -408,9 +428,25 @@ def block_user(user_id):
         return "Access Denied", 403
     
     user = User.query.get_or_404(user_id)
-    user.is_active_db = False  # Deactivating the user
+    user.is_active_db = False  
     db.session.commit()
-    return redirect(url_for('admin_panel'))
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True}), 200
+    else:
+        return redirect(url_for('admin_panel'))
+    
+@app.route('/reactivate_user/<int:user_id>', methods=['POST'])
+def reactivate_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    user.is_active_db = True  
+    db.session.commit()
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True}), 200
+    else:
+        return redirect(url_for('admin_panel'))
+
 
 @app.route('/api/register', methods=['POST'])
 def api_register():
@@ -514,18 +550,60 @@ def add_product():
         print("Image Filename:", image_filename)
 
         return jsonify({
-            'success': True,
-            'product_name': product_name,
-            'price': price,
-            'img_url': img_url
-        }), 200
-
+                    'success': True,
+                    'product': {
+                        'product_name': new_product.product_name,
+                        'price': new_product.price,
+                        'product_pic': image_filename,
+                        'product_id': new_product.product_id
+                    }
+                }), 200   
     except Exception as e:
         print("Error adding product:", e)
         print(traceback.format_exc())  
 
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if product.vendor_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    db.session.delete(product)
+    db.session.commit()
+    return jsonify({'success': True})
+
+
+@app.route('/edit_product/<int:product_id>', methods=['POST'])
+@login_required
+def edit_product(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    if product.vendor_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    try:
+        product.product_name = request.form['product_name']
+        product.category_id = int(request.form['category'])  
+        product.description = request.form['description']
+        product.price = float(request.form['price'])
+        product.stock = int(request.form['stock'])
+
+        if 'product_pic' in request.files and request.files['product_pic'].filename != '':
+            file = request.files['product_pic']
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.root_path, 'static', 'product_images', filename)
+            file.save(filepath)
+            product.product_pic = filename
+
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Product updated successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -551,7 +629,7 @@ def login():
                 "message": "Login successful",
                 "role": user.role,
                 "user_id": user.id,
-                "redirect_url": f"/me_page/{user.id}" if user.role == 'vendor' else "/products"
+                "redirect_url": f"/me_page/{user.id}" if user.role == 'vendor' else "/products.html"
             }), 200
         else:
             print("Password match: False")

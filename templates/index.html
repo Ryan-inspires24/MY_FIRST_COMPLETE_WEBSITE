@@ -5,10 +5,17 @@
 {% block title %} Home - CamInspo{% endblock %}
 
 {% block content %}
-<main class="container my-5">
-    <div class="row align-items-center">
-        <div class="col-md-6 mb-4" id="blockquote" style="background-image: ('{{ url_for('static', filename='uploads/backgroundimage')}}') ;">
-            <figure class="border p-4 rounded shadow-lg bg-light">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<main class="container-fluid my-5">
+    <div class="row align-items-center hero-section">
+        <div class="col-md-6 hero-text">
+            <h2 class="fw-bold" id="heroHeading">Explore the Market!</h2>
+            <p class="lead p-3 fs-4">Discover a wide range of products and services from Cameroon’s finest vendors.</p>
+            <p class="p-4 fs-4">Start shopping now and be part of the CamInspo revolution!</p>
+    
+            <figure class="border p-4 rounded shadow-lg">
                 <blockquote class="blockquote text-center">
                     <p class="mb-0">"CamInspo, at the heart of Cameroon Trade..."</p>
                 </blockquote>
@@ -16,26 +23,87 @@
                     <cite>- By CamInspo Team</cite>
                 </figcaption>
             </figure>
-        </div>
+    <div class="p-4 text-center">
+        <a href="{{url_for('products_page')}}" id="get_started_btn">Get Started</a>
 
-        <div class="col-md-6">
-            <h2 class="fw-bold">Explore the Market</h2>
-            <p class="lead p-3 fs-4">Discover a wide range of products and services from Cameroon’s finest vendors. Whether
-                you're looking for traditional arts, fashion, or modern beauty products, CamInspo has it all!</p>
-            <p class="p-4 fs-4">Join a growing community of shoppers and vendors on our platform. Easily browse products by
-                category and connect with vendors to get the best deals. Start shopping now and be part of the CamInspo
-                revolution!</p>
-            <a href="products.html" class="btn btn-primary btn-lg">Get Started</a>
+    </div>
+        </div>
+    
+        <div class="col-md-6 mb-4" id="heroImage">
+            <img src="{{ url_for('static', filename='hero_image.jpg') }}" alt="Hero Image">
         </div>
     </div>
-</main>
+    </main>
 
-<section class="container-fluid bg-dark text-white py-5 text-center shadow-lg">
-    <h2 class="fw-bold">Unlock Premium Features!</h2>
-    <p class="lead my-3">Get more visibility, attract more customers, and boost your sales with our premium listings.</p>
-    <a href="premium.html" class="btn btn-warning btn-lg">Upgrade to Premium</a>
-</section>
-<section class="container my-5">
+    <section class="container-fluid bg-dark text-white py-5 shadow-lg" id="premiumSection">
+        <div class="container text-center">
+          <h2 class="fw-bold display-5 mb-3">Unlock Premium Features!</h2>
+          <p class="lead mb-5">Get more visibility, attract more customers, and boost your sales with our premium listings.</p>
+      
+          <div class="row justify-content-center mb-5">
+            <div class="col-md-4 mb-4">
+              <div class="card bg-secondary text-white border-light h-100 shadow">
+                <div class="card-body">
+                  <h4 class="card-title">Starter</h4>
+                  <p class="card-text">For new vendors testing the waters.</p>
+                  <h3 class="text-warning">XAF 5,000 / month</h3>
+                  <ul class="list-unstyled mt-3">
+                    <li>✔ 1 Premium Listing</li>
+                    <li>✔ Basic Analytics</li>
+                    <li>✔ Email Support</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-4">
+              <div class="card bg-primary text-white border-light h-100 shadow-lg">
+                <div class="card-body">
+                  <h4 class="card-title">Business</h4>
+                  <p class="card-text">Boost your presence and get noticed.</p>
+                  <h3 class="text-warning">XAF 12,000 / month</h3>
+                  <ul class="list-unstyled mt-3">
+                    <li>✔ 5 Premium Listings</li>
+                    <li>✔ Advanced Analytics</li>
+                    <li>✔ Priority Support</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-4">
+              <div class="card bg-success text-white border-light h-100 shadow">
+                <div class="card-body">
+                  <h4 class="card-title">Elite</h4>
+                  <p class="card-text">Maximize impact with premium exposure.</p>
+                  <h3 class="text-warning">XAF 25,000 / month</h3>
+                  <ul class="list-unstyled mt-3">
+                    <li>✔ Unlimited Listings</li>
+                    <li>✔ Full Analytics Suite</li>
+                    <li>✔ Dedicated Account Manager</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+      
+          <div class="row text-center my-5">
+            <div class="col-md-4">
+              <h2 class="text-warning"><span id="vendorsCount">0</span>+</h2>
+              <p>Vendors Upgraded</p>
+            </div>
+            <div class="col-md-4">
+              <h2 class="text-warning"><span id="productsCount">0</span>+</h2>
+              <p>Premium Products Listed</p>
+            </div>
+            <div class="col-md-4">
+              <h2 class="text-warning"><span id="salesCount">0</span>+</h2>
+              <p>Sales Boosted</p>
+            </div>
+          </div>
+      
+          <a href="premium.html" class="btn btn-warning btn-lg px-5">Upgrade to Premium</a>
+        </div>
+      </section>
+      <section class="container my-5">
     <h2 class="text-center mb-4">Check Out the Latest Services & Products</h2>
 
     <div class="row g-4">
@@ -57,32 +125,61 @@
 </section>
 <section class="container">
     <h2 class="text-center fw-bold">Why Choose CamInspo?</h2>
-    <p class="text-center lead mb-4">CamInspo is more than just a marketplace—it’s a powerful tool for businesses and customers alike.</p>
+    <p class="text-center lead mb-4">CamInspo is more than just a marketplace—it’s a powerful tool for businesses and
+        customers alike.</p>
 
     <ul class="list-group list-group-flush fs-5">
         <li class="list-group-item">
-            <i class="bi bi-eye text-primary"></i> <strong>Increased Visibility:</strong> Small businesses and local vendors get a platform to reach a wider audience.
+            <i class="bi bi-eye text-primary"></i> <strong>Increased Visibility:</strong> Small businesses and local
+            vendors get a platform to reach a wider audience.
         </li>
         <li class="list-group-item">
-            <i class="bi bi-calendar-event text-success"></i> <strong>Easy Reservations:</strong> Customers can effortlessly book services online, reducing long wait times.
+            <i class="bi bi-calendar-event text-success"></i> <strong>Easy Reservations:</strong> Customers can
+            effortlessly book services online, reducing long wait times.
         </li>
         <li class="list-group-item">
-            <i class="bi bi-people text-warning"></i> <strong>Perfect for Tourists:</strong> Tourists can discover authentic Cameroonian businesses and experiences with ease.
+            <i class="bi bi-people text-warning"></i> <strong>Perfect for Tourists:</strong> Tourists can discover
+            authentic Cameroonian businesses and experiences with ease.
         </li>
         <li class="list-group-item">
-            <i class="bi bi-graph-up-arrow text-danger"></i> <strong>Boost Sales:</strong> Vendors can list promotions, attract customers, and grow their businesses faster.
+            <i class="bi bi-graph-up-arrow text-danger"></i> <strong>Boost Sales:</strong> Vendors can list promotions,
+            attract customers, and grow their businesses faster.
         </li>
     </ul>
 </section>
 
 <section class="container-fluid bg-light py-5 text-center shadow-lg">
     <h2 class="fw-bold">Stay Updated!</h2>
-    <p class="lead">Subscribe to our newsletter and be the first to know about new products, services, and special offers.</p>
+    <p class="lead">Subscribe to our newsletter and be the first to know about new products, services, and special
+        offers.</p>
 
     <form method="POST" class="d-flex justify-content-center">
         <input type="email" name="email" class="form-control w-50 p-3" placeholder="Enter your email" required>
         <p><input type="button" class=" btn btn-primary ms-3 p-3" value="Submit"></p>
     </form>
 </section>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.7/countUp.min.js"></script>
+<script>
+    function countUp(elementId, target, duration) {
+      const element = document.getElementById(elementId);
+      let start = 0;
+      const increment = target / (duration / 10);
+  
+      const counter = setInterval(() => {
+        start += increment;
+        if (start >= target) {
+          start = target;
+          clearInterval(counter);
+        }
+        element.textContent = Math.floor(start);
+      }, 10);
+    }
+  
+    window.addEventListener('DOMContentLoaded', () => {
+      countUp('vendorsCount', 120, 2000);   
+      countUp('productsCount', 450, 2000);
+      countUp('salesCount', 1800, 2000);
+    });
+  </script>
+  
 {% endblock %}

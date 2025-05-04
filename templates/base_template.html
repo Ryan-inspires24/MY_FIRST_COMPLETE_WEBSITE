@@ -348,7 +348,7 @@
                                 .then(res => res.json())
                                 .then(data => {
                                     if (data.status === 'success') {
-                                        window.location.href = data.redirect;
+                                        window.location.href = data.redirect_url;
                                     } else {
                                         alert(data.message || 'Login failed');
                                     }
@@ -419,13 +419,15 @@
 
     <nav class="row" id="navigation">
         <ul class="list-inline d-flex justify-content-around w-100 p-3 fs-4">
-            <li class="list-inline-item"><a href="vendors.html">Vendors</a></li>
-            <li class="list-inline-item"><a href="products.html">Products</a></li>
-            <li class="list-inline-item"><a href="about.html">About</a></li>
+            <li class="list-inline-item"><a href="{{ url_for('vendors_page') }}">Vendors</a>
+                </li>
+            <li class="list-inline-item"><a href="{{ url_for('products_page') }}">Products</a>
+                </li>
+            <li class="list-inline-item"><a href="{{ url_for('about_page')}}">About</a></li>
         </ul>
     </nav>
 
-    <div class="container mt-4">
+    <div class="container-fluid mt-4">
         {% block content %}{% endblock %}
     </div>
 

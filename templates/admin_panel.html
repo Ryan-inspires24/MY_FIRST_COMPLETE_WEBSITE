@@ -29,9 +29,9 @@
                         <td>{{ vendor.username }}</td>
                         <td>{{ vendor.email }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('block_user', user_id=vendor.id) }}">
-                                <button type="submit" class="btn btn-warning">Block User</button>
-                            </form>
+                            <button type="button" class="btn btn-warning block-user-btn" data-user-id="{{ vendor.id }}">
+                                Block User
+                            </button>
                             <a href="{{ url_for('delete_user', user_id=vendor.id) }}"
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
@@ -58,9 +58,9 @@
                         <td>{{ client.username }}</td>
                         <td>{{ client.email }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('block_user', user_id=client.id) }}">
-                                <button type="submit" class="btn btn-warning">Block User</button>
-                            </form>
+                            <button type="button" class="btn btn-warning block-user-btn" data-user-id="{{ client.id }}">
+                                Block User
+                            </button>
                             <a href="{{ url_for('delete_user', user_id=client.id) }}"
                                 class="btn btn-danger btn-sm">Delete</a>
                         </td>
@@ -84,14 +84,15 @@
                 </thead>
                 <tbody>
                     {% for comment in vendor_comments %}
-                    <tr>
+                    <tr id="comment-{{ comment.id }}">
                         <td>{{ comment.user.username }}</td>
                         <td>{{ comment.vendor.username }}</td>
                         <td>{{ comment.content }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}">
-                                <button type="submit" class="btn btn-danger">Delete Comment</button>
-                            </form>
+                            <button type="button" class="btn btn-danger delete-vendor-comment-btn"
+                                data-comment-id="{{ comment.id }}"> Delete </button>
+
+
                         </td>
                     </tr>
                     {% endfor %}
@@ -113,14 +114,15 @@
                 </thead>
                 <tbody>
                     {% for comment in product_comments %}
-                    <tr>
+                    <tr id="comment-{{ comment.id }}">
                         <td>{{ comment.user.username }}</td>
                         <td>{{ comment.product.product_name }}</td>
                         <td>{{ comment.content }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}">
-                                <button type="submit" class="btn btn-danger">Delete Comment</button>
-                            </form>
+                            <button type="button" class="btn btn-danger delete-product-comment-btn"
+                                data-comment-id="{{ comment.id }}">
+                                Delete Comment
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -130,7 +132,125 @@
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteProductButtons = document.querySelectorAll('.delete-product-comment-btn');
+            deleteProductButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const commentId = this.getAttribute('data-comment-id');
+
+                    if (confirm('Are you sure you want to delete this comment?')) {
+                        fetch(`/delete_comment/${commentId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest' // important for Flask sometimes
+                            },
+                            body: JSON.stringify({})
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    // Remove the comment row from the table
+                                    const commentRow = document.getElementById(`comment-${commentId}`);
+                                    if (commentRow) {
+                                        commentRow.remove();
+                                    }
+                                } else {
+                                    alert('Failed to delete comment.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Something went wrong.');
+                            });
+                    }
+                });
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteVendorButtons = document.querySelectorAll('.delete-vendor-comment-btn');
+            deleteVendorButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const commentId = this.getAttribute('data-comment-id');
+
+                    if (confirm('Are you sure you want to delete this comment?')) {
+                        fetch(`/delete_comment/${commentId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest' // important for Flask sometimes
+                            },
+                            body: JSON.stringify({})
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    // Remove the comment row from the table
+                                    const commentRow = document.getElementById(`comment-${commentId}`);
+                                    if (commentRow) {
+                                        commentRow.remove();
+                                    }
+                                } else {
+                                    alert('Failed to delete comment.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Something went wrong.');
+                            });
+                    }
+                });
+            });
+
+        })
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const blockButtons = document.querySelectorAll('.block-user-btn');
+
+            blockButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const userId = this.getAttribute('data-user-id');
+                    const isBlocked = this.classList.contains('btn-danger'); // If already blocked
+
+                    const action = isBlocked ? 'reactivate' : 'block';
+                    const confirmMessage = isBlocked ?
+                        'Are you sure you want to reactivate this user?' :
+                        'Are you sure you want to block this user?';
+
+                    if (confirm(confirmMessage)) {
+                        fetch(`/${action}_user/${userId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({})
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    // Toggle button appearance and text
+                                    if (isBlocked) {
+                                        this.textContent = 'Block User';
+                                        this.classList.remove('btn-danger');
+                                        this.classList.add('btn-warning');
+                                    } else {
+                                        this.textContent = 'Reactivate User';
+                                        this.classList.remove('btn-warning');
+                                        this.classList.add('btn-danger');
+                                    }
+                                } else {
+                                    alert('Failed to perform action.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Something went wrong.');
+                            });
+                    }
+                });
+            });
+        });
+
+    </script>
 </body>
 
 </html>
