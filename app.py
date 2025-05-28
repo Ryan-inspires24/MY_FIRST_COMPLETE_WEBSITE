@@ -195,8 +195,8 @@ class SavedProduct(db.Model):
         return f'<SavedProduct user={self.user_id} product={self.product_id}>'
 
 
-@app.route('/me_page/<int:vendor_id>')
-def me_page(vendor_id):
+@app.route('/vendor_me_page/<int:vendor_id>')
+def vendor_me_page(vendor_id):
 
     if current_user.id != vendor_id:
         return f'unauthorized' 
@@ -212,7 +212,40 @@ def me_page(vendor_id):
         user=user
     )
 
- 
+@app.route('/manage-account')
+def manage_account():
+    if 'logged_in' in session:
+        user_role = session.get('role')
+
+        if user_role == 'vendor':
+            return redirect(url_for('vendor_me_page'))
+        elif user_role == 'client':
+            return redirect(url_for('products_page'))
+        elif user_role == 'admin':
+            return redirect(url_for('admin_panel'))
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/toggle_save_product/<int:product_id>', methods=['POST'])
+@login_required
+def toggle_save_product(product_id):
+    saved = SavedProduct.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+
+    if saved:
+        db.session.delete(saved)
+        db.session.commit()
+        return jsonify({'saved': False})
+    else:
+        new_saved = SavedProduct(user_id=current_user.id, product_id=product_id)
+        db.session.add(new_saved)
+        db.session.commit()
+        return jsonify({'saved': True})
+
+@app.route('/saved-products')
+def saved_products():
+    user = User.query.all()  
+    return render_template('saved_products.html', user=user)
+
 @app.route('/api/add_product_comment', methods=['POST'])
 def add_product_comment():
     try:
@@ -293,6 +326,18 @@ def product_details(product_id):
          return render_template("product_details.html", product=product, user=user)
      return "Product not found", 404
  
+@app.route('/live-search')
+def live_search():
+    q = request.args.get('q', '').lower()
+
+    products = [{'name': 'Shoe', 'url': '/product/shoe', 'type': 'Product'}]
+    vendors = [{'name': 'John’s Store', 'url': '/vendor/john', 'type': 'Vendor'}]
+
+    all_data = products + vendors
+    results = [item for item in all_data if q in item['name'].lower()]
+
+    return jsonify({'results': results})
+
 @app.route('/vendor/<int:vendor_id>')
 def vendor_profile(vendor_id):
     vendor = User.query.get(vendor_id)
@@ -300,9 +345,13 @@ def vendor_profile(vendor_id):
 
     if not vendor:
         abort(404) 
-        
-    return render_template("vendor_profile.html", vendor=vendor, user=user)
- 
+        saved_product_ids = []
+
+    if current_user.is_authenticated:
+        saved_product_ids = [sp.product_id for sp in current_user.saved_products]
+
+    return render_template("vendor_profile.html", vendor=vendor, user=user, saved_product_ids=saved_product_ids)
+
 @app.route('/about.html')
 def about_page():
     user = User.query.all()  
@@ -378,7 +427,7 @@ def resetdb():
     db.create_all()
     return 'Database reset successfully'
     
-@app.route('/admin_panel.html')
+@app.route('/admin_panel')
 @login_required
 def admin_panel():
     if current_user.role != 'admin':
@@ -460,10 +509,8 @@ def api_register():
     password = request.form.get('register_password')
     profile_picture = request.files.get('profile_picture')
 
-    # Hash the password for security
     hashed_password = generate_password_hash(password)
 
-    # Handle profile picture upload
     if profile_picture:
         if profile_picture and allowed_file(profile_picture.filename):
             filename = secure_filename(profile_picture.filename)
@@ -605,6 +652,7 @@ def edit_product(product_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/login', methods=['POST'])
 def login():
     print("Raw form data received:", request.form)
@@ -625,11 +673,13 @@ def login():
     if user:
         if check_password_hash(user.password, password):
             login_user(user)
+            # Store the user's role in the session
+            session['role'] = user.role
             return jsonify({
                 "message": "Login successful",
                 "role": user.role,
                 "user_id": user.id,
-                "redirect_url": f"/me_page/{user.id}" if user.role == 'vendor' else "/products.html"
+                "redirect_url": f"/vendor_me_page/{user.id}" if user.role == 'vendor' else "/products.html"
             }), 200
         else:
             print("Password match: False")
@@ -637,7 +687,6 @@ def login():
 
     print("Login failed: invalid username or password")
     return jsonify({"message": "Login failed"}), 401
-
      
 @app.route('/logout')
 def logout():

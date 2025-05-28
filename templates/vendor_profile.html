@@ -5,64 +5,72 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='detailed_listing.css') }}">
 
-<div class="container py-4">
-    <div class="row">
+<div class="vendor-profile-container py-4">
+    <div class="row g-4">
+        <!-- Vendor Image -->
         <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_picture) }}"
-                class="img-fluid rounded-circle shadow" alt="Vendor Profile Picture">
-
+            <img src="{{ url_for('static', filename='vendor_images/' + vendor.profile_picture) }}" class="vendor_image"
+                alt="Vendor Profile Picture">
         </div>
 
+        <!-- Vendor Details -->
         <div class="col-md-8">
-            <h4 class="fw-bold">About the Vendor</h4>
+            <h4 class="vendor-header">About the Vendor</h4>
             <p>{{ vendor.description }}</p>
 
-            <h4 class="fw-bold mt-4">Contact Details</h4>
-            <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a></p>
-            <p><strong>Phone:</strong> {{ vendor.phone_number }}</p>
-            <p><strong>Location:</strong> {{ vendor.location }}</p>
+            <h4 class="vendor-header mt-4">Contact Details</h4>
+            <div class="vendor-contact">
+                <p><strong>Email:</strong> <a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a></p>
+                <p><strong>Phone:</strong> {{ vendor.phone_number }}</p>
+                <p><strong>Location:</strong> {{ vendor.location }}</p>
+            </div>
 
-            <h4 class="fw-bold mt-4">Products & Services</h4>
-            <div class="row g-3">
+            <h4 class="vendor-header mt-4">Products & Services</h4>
+            <div class="vendor-products row g-3">
                 {% for product in vendor.products %}
                 <div class="col-md-6 col-lg-4">
-                    <div class="card shadow-sm border-1 h-100">
-                        <img src="{{ url_for('static', filename='product_images/'+ product.product_pic) }}" class="card-img-top img-fluid rounded">
-                        <div class="card-body d-flex flex-column">
+                    <div class="vendor-product-card">
+                        <img src="{{ url_for('static', filename='product_images/'+ product.product_pic) }}"
+                            class="vendor-product-card-img" alt="{{ product.name }}">
+                        <div class="vendor-product-card-body">
                             <h5 class="card-title fw-bold">{{ product.name }}</h5>
                             <p class="card-text"><strong>Price:</strong> {{ product.price }} XAF</p>
-                            <a href="{{ url_for('product_details', product_id=product.product_id) }}"
-                                class="btn btn-primary mt-auto">View Product</a>
-                                
+                            <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 save-btn"
+                                data-product-id="{{ product.product_id }}"
+                                data-saved="{{ product.product_id in saved_product_ids }}">
+                                <i
+                                    class="bi {{ 'bi-heart-fill text-danger' if product.product_id in saved_product_ids else 'bi-heart' }}"></i>
+                            </button>
+                            <a href="{{ url_for('product_details', product_id=product.product_id) }}">View Product</a>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+
             <div class="mt-5">
                 <h4 class="fw-bold">Comments</h4>
-                <div id="comments-box" class="border p-3 rounded-3" style="height: 300px; overflow-y: auto;">
-                </div>
-
+                <div id="comments-box"></div>
                 <div class="d-flex mt-3">
-                    <textarea id="comment-input" class="form-control rounded-3" rows="3"
-                        placeholder="Write a message..." style="resize: none;"></textarea>
-                    <button id="send-comment" class="btn btn-success ms-2 align-self-end">
+                    <textarea id="comment-input" class="form-control comment-input" rows="3"
+                        placeholder="Write a message..."></textarea>
+                    <button id="send-comment" class="ms-2">
                         <i class="bi bi-send"></i> Send
                     </button>
-                    <!-- Hidden elements to store vendor_id and user_id -->
-                    <span id="vendor-id" data-id="{{ vendor.id }}" hidden></span>
-                    <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
-                        hidden></span>
-                    <span id="is-authenticated"
-                        data-id="{{ 'false' if not current_user.is_authenticated else 'true' }};"></span>
                 </div>
+
+                <!-- Hidden IDs -->
+                <span id="vendor-id" data-id="{{ vendor.id }}" hidden></span>
+                <span id="user-id" data-id="{{ 'null' if not current_user.is_authenticated else current_user.id }}"
+                    hidden></span>
+                <span id="is-authenticated"
+                    data-id="{{ 'false' if not current_user.is_authenticated else 'true' }}"></span>
             </div>
         </div>
-        <div id="message-box"></div>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const sendCommentButton = document.getElementById('send-comment');
@@ -135,6 +143,30 @@
 
             });
         });
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const productId = btn.getAttribute('data-product-id');
+
+                fetch(`/toggle_save_product/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const icon = btn.querySelector('i');
+                        if (data.saved) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill', 'text-danger');
+                        } else {
+                            icon.classList.remove('bi-heart-fill', 'text-danger');
+                            icon.classList.add('bi-heart');
+                        }
+                    });
+            });
+        });
+
 
 
     </script>

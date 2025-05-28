@@ -22,163 +22,193 @@
         crossorigin="anonymous"></script>
 
     <div class="container-fluid">
-        <header class="row py-3" id="header">
-            <div class="col-sm-6">
-                <h1 class="fs-xl-4 text-center">CamInspo Market Hub</h2>
-            </div>
-            <div class="col-sm-3">
-                <div class="dropdown p-3">
-                    <button class="btn btn-light dropdown-toggle " type="button" id="category_dropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-list"></i> Categories
+        <header class="main-header" id="header">
+
+            <div class="top-header roza-bg d-flex justify-content-between align-items-center p-3">
+
+                <div class="logo">
+                    CamInspo
+                </div>
+                <div class="search-container position-relative">
+                    <input type="text" class="search-input form-control" id="live-search"
+                        placeholder="Search anything...">
+                    <ul class="list-group position-absolute w-100" id="search-results" style="z-index: 1000;"></ul>
+                    <button class="btn btn-dark ms-2" id="search-button">
+                        <i class="bi bi-search"></i>
                     </button>
-                    <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
-                        <li><a class="dropdown-item" href="/category/Arts and Artifacts">Arts and Artifacts</a></li>
-                        <li><a class="dropdown-item" href="/category/Beauty">Beauty</a></li>
-                        <li><a class="dropdown-item" href="/category/Food">Food</a></li>
+
+                </div>
+                <div class="header-links">
+
+                    <button class="btn btn-light dropdown-toggle" type="button" id="my_account"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        Sign In / Register
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="my_account">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                data-bs-target="#login_modal">Login</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                data-bs-target="#register_modal">Register</a></li>
                     </ul>
+                    <a href="{{ url_for('saved_products') }}">Saved Products</a>
+
+                </div>
+
+
+            </div>
+
+            <div class="modal fade" id="login_modal" tabindex="-1" aria-labelledby="login_modal_label"
+                aria-hidden="true">
+
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">Login to manage your account.</h5>
+
+
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" enctype="multipart/form-data" action="/api/login" id="login_form">
+                                <div class="mb-3 form-group">
+                                    <label for="login_username" class="form-label">Enter your username </label>
+                                    <input type="text" class="form-control" id="login_username" name="login_username"
+                                        required>
+                                </div>
+
+                                <div class="mb-3 form-group">
+                                    <label for="login_password" class="form-label"> Enter your Password</label>
+                                    <input type="password" class="form-control" id="login_password"
+                                        name="login_password" required>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <input type="submit" class="btn btn-primary" value="Login">
+
+                                </diV>
+
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
-          
-            <div class="col-3 p-3">
-                <button class="btn btn-light dropdown-toggle" type="button" id="my_account" data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                    <i class="bi bi-person-circle"></i> My Account
-                </button>
 
-                <ul class="dropdown-menu" aria-labelledby="category_dropdown">
-                    <li><a class="dropdown-item" href="" data-bs-toggle="modal" data-bs-target="#login_modal">Login</a>
-                    </li>
-                    <li><a class="dropdown-item" href="" data-bs-toggle="modal"
-                            data-bs-target="#register_modal">Register</a></li>
+            <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true"
+                tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Create an account on CamInspo</h5>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="/register" enctype="multipart/form-data" id="multiStepForm">
+
+                                <div class="mb-3">
+                                    <label for="user_type" class="form-label">Select User Type</label>
+                                    <select name="user_type" id="user_type" class="form-select"
+                                        onchange="toggleUserForm()" required>
+                                        <option value="" disabled selected>Select your user type</option>
+                                        <option value="client">Client</option>
+                                        <option value="vendor">Vendor</option>
+                                    </select>
+                                </div>
+
+                                <div id="vendor_form" class="form-section" style="display: none;"
+                                    data-user-type="vendor">
+                                    <h6>Business Info</h6>
+                                    <div class="mb-3">
+                                        <label for="profile_picture" class="form-label">Upload a Profile
+                                            Picture</label>
+                                        <input type="file" name="profile_picture" id="profile_picture"
+                                            class="form-control" accept="image/*">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" name="first_name" id="first_name" class="form-control"
+                                            pattern="[A-Za-z]+">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="surname" class="form-label">Surname</label>
+                                        <input type="text" name="surname" id="surname" class="form-control"
+                                            pattern="[A-Za-z]+">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Business Description</label>
+                                        <textarea name="description" id="description" class="form-control"></textarea>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="mb-3" data-user-type="all">
+                                    <label for="register_username" class="form-label">Username</label>
+                                    <input type="text" name="register_username" id="register_username"
+                                        class="form-control" oninput="debounced_check_username()" required>
+                                    <p id="status"></p><span id="status_icon"></span>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" name="email" id="email" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="phone_number" class="form-label">Phone Number</label>
+                                    <input type="tel" name="phone_number" id="phone_number" class="form-control"
+                                        required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register_password" class="form-label">Create a Password</label>
+                                    <input type="password" name="register_password" id="register_password"
+                                        class="form-control" required minlength="6">
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-success" id="register_btn">Submit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <nav class="main-nav">
+
+                {% if user.role == 'admin' %}
+                <a href="{{ url_for('admin_panel') }}"><i class="fas fa-tachometer-alt"></i>
+                    Admin Panel</a>
+                {% endif %}
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('vendors_page') }}">Vendors</a>
+                <a href="{{ url_for('products_page') }}">Products</a>
+                <a href="{{ url_for('about_page')}}">About</a>
                 </ul>
+            </nav>
 
-                <div class="modal fade" id="login_modal" tabindex="-1" aria-labelledby="login_modal_label"
-                    aria-hidden="true">
+            <hr class="separator">
 
-                    <div class="modal-dialog">
-                        <div class="modal-content p-3">
-                            <div class="modal-header">
+        </header>
 
-                                <h5 class="modal-title">Login to manage your account.</h5>
+        <div class="container-fluid mt-4">
+            {% block content %}{% endblock %}
+        </div>
 
-
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form method="POST" enctype="multipart/form-data" action="/api/login" id="login_form">
-                                    <div class="mb-3 form-group">
-                                        <label for="login_username" class="form-label">Enter your username </label>
-                                        <input type="text" class="form-control" id="login_username"
-                                            name="login_username" required>
-                                    </div>
-
-                                    <div class="mb-3 form-group">
-                                        <label for="login_password" class="form-label"> Enter your Password</label>
-                                        <input type="password" class="form-control" id="login_password"
-                                            name="login_password" required>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <input type="submit" class="btn btn-primary" value="Login">
-                                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
-                                            data-bs-target="#register_modal" id="login_btn">
-
-                                    </diV>
-
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+        <footer class="row p-4" id='footer'>
+            <div>
+                <div class="col-md-6">
+                    <p>&copy; 2025 CamInspo Market Hub. All rights reserved.</p>
                 </div>
-
-                <!-- Registration Modal -->
-                <div class="modal fade" id="register_modal" aria-labelledby="register_modal_label" aria-hidden="true"
-                    tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content p-3">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Create an account on CamInspo</h5>
-                            </div>
-                            <div class="modal-body">
-                                <form method="POST" action="/register" enctype="multipart/form-data" id="multiStepForm">
-
-                                    <!-- User Type Selection -->
-                                    <div class="mb-3">
-                                        <label for="user_type" class="form-label">Select User Type</label>
-                                        <select name="user_type" id="user_type" class="form-select"
-                                            onchange="toggleUserForm()" required>
-                                            <option value="" disabled selected>Select your user type</option>
-                                            <option value="client">Client</option>
-                                            <option value="vendor">Vendor</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Vendor Registration Form -->
-                                    <div id="vendor_form" class="form-section" style="display: none;"
-                                        data-user-type="vendor">
-                                        <h6>Business Info</h6>
-                                        <div class="mb-3">
-                                            <label for="profile_picture" class="form-label">Upload a Profile
-                                                Picture</label>
-                                            <input type="file" name="profile_picture" id="profile_picture"
-                                                class="form-control" accept="image/*">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="first_name" class="form-label">First Name</label>
-                                            <input type="text" name="first_name" id="first_name" class="form-control"
-                                                pattern="[A-Za-z]+">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="surname" class="form-label">Surname</label>
-                                            <input type="text" name="surname" id="surname" class="form-control"
-                                                pattern="[A-Za-z]+">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Business Description</label>
-                                            <textarea name="description" id="description"
-                                                class="form-control"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <!-- Client Registration Form -->
-
-
-                                    <!-- Common Fields -->
-                                    <div class="mb-3" data-user-type="all">
-                                        <label for="register_username" class="form-label">Username</label>
-                                        <input type="text" name="register_username" id="register_username"
-                                            class="form-control" oninput="debounced_check_username()" required>
-                                        <p id="status"></p><span id="status_icon"></span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email Address</label>
-                                        <input type="email" name="email" id="email" class="form-control" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="phone_number" class="form-label">Phone Number</label>
-                                        <input type="tel" name="phone_number" id="phone_number" class="form-control"
-                                            required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="register_password" class="form-label">Create a Password</label>
-                                        <input type="password" name="register_password" id="register_password"
-                                            class="form-control" required minlength="6">
-                                    </div>
-
-                                    <div class="d-flex justify-content-between">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-success" id="register_btn">Submit</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-md-6 text-end">
+                    <p>Follow Us:
+                        <a href="" class="text-light mx-2"><i class="bi bi-facebook"></i></a>
+                        <a href="" class="text-light mx-2"><i class="bi bi-twitter"></i></a>
+                        <a href="" class="text-light mx-2"><i class="bi bi-instagram"></i></a>
+                    </p>
                 </div>
-                <script>
+            </div>
+        </footer>
+    </div>
+    <script>
 
-                    // Toggle form fields based on user type
                     function toggleUserForm() {
                         var userType = document.getElementById("user_type").value;
                         if (userType === "vendor") {
@@ -231,7 +261,7 @@
                                         alert('Registration successful! Redirecting...');
                                         let loginModal = new bootstrap.Modal(document.getElementById('login_modal'));
                                         var myModal = new bootstrap.Modal(document.getElementById('register_modal'));
-                                        myModal.hide();  // This closes the modal
+                                        myModal.hide();  
 
                                         loginModal.show();
                                     } else {
@@ -397,55 +427,30 @@
                             } if (email_icon)
                                 email_icon.innerHTML = "";
                         }
-                    } </script>
+                    } 
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchButton = document.getElementById("search-button");
+            const searchInput = document.getElementById("live-search");
 
+            searchButton.addEventListener("click", () => {
+                const query = searchInput.value.trim();
+                if (query !== "") {
+                    // Replace this with your search route
+                    window.location.href = `/search?q=${encodeURIComponent(query)}`;
+                }
+            });
 
-            </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    {% if user.role == 'admin' %}
-    <div class="col-3 p-3">
-        <a href="admin_panel.html">
-            <button class="btn btn-primary">
-                <i class="fas fa-tachometer-alt"></i> Admin Panel
-            </button>
-        </a>
-    </div>
-{% endif %}
-    </header>
+            // Optional: also allow pressing Enter in the input
+            searchInput.addEventListener("keypress", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchButton.click();
+                }
+            });
+        });
 
-    <nav class="row" id="navigation">
-        <ul class="list-inline d-flex justify-content-around w-100 p-3 fs-4">
-            <li class="list-inline-item"><a href="{{ url_for('vendors_page') }}">Vendors</a>
-                </li>
-            <li class="list-inline-item"><a href="{{ url_for('products_page') }}">Products</a>
-                </li>
-            <li class="list-inline-item"><a href="{{ url_for('about_page')}}">About</a></li>
-        </ul>
-    </nav>
+    </script>
 
-    <div class="container-fluid mt-4">
-        {% block content %}{% endblock %}
-    </div>
-
-    <footer class="row p-4" id='footer'>
-        <div>
-            <div class="col-md-6">
-                <p>&copy; 2025 CamInspo Market Hub. All rights reserved.</p>
-            </div>
-            <div class="col-md-6 text-end">
-                <p>Follow Us:
-                    <a href="" class="text-light mx-2"><i class="bi bi-facebook"></i></a>
-                    <a href="" class="text-light mx-2"><i class="bi bi-twitter"></i></a>
-                    <a href="" class="text-light mx-2"><i class="bi bi-instagram"></i></a>
-                </p>
-            </div>
-        </div>
-    </footer>
-    </div>
 </body>
 
 </html>
